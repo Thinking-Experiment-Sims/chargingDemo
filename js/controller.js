@@ -100,6 +100,22 @@ class ElectrostaticsController {
      */
     onRodChargeChange(value) {
         const charge = parseFloat(value);
+        const previousCharge = this.model.rodCharge;
+        
+        // If the charge sign changed and we're in induction mode,
+        // temporarily clear any transient charges to allow proper new polarization
+        if (Math.sign(charge) !== Math.sign(previousCharge) && this.model.chargingMode === "induction") {
+            // Only reset induction effects, not permanent charges
+            if (this.model.isGrounded) {
+                // When grounded, start building up the opposite charge again
+                // No need to reset completely
+            } else {
+                // When not grounded, reset any polarization effect immediately
+                // This allows proper re-polarization with the new rod charge
+                this.model.inducedCharge = 0;
+            }
+        }
+        
         this.model.setRodCharge(charge);
         
         // Update display in real-time
@@ -134,23 +150,23 @@ class ElectrostaticsController {
     /**
      * Reset the simulation to its initial state
      */
-    onResetSimulation() {
+    resetSimulation() {
         this.model.reset();
         
         // Reset UI controls to match model state
-        const radioButtons = document.querySelectorAll('input[name="charging-mode"]');
-        radioButtons.forEach(radio => {
-            if (radio.value === "none") {
-                radio.checked = true;
-            }
-        });
+        document.querySelector('input[name="charging-mode"][value="none"]').checked = true;
+        document.getElementById('charge-slider').value = 5;
+        document.getElementById('ground-toggle').classList.remove('grounded');
+        document.getElementById('ground-toggle').textContent = 'Ground Ball';
+        document.getElementById('show-charges').checked = true;
+        document.getElementById('show-field').checked = false;
         
-        const chargeSlider = document.getElementById('charge-slider');
-        if (chargeSlider) {
-            chargeSlider.value = this.model.rodCharge;
-        }
+        // Reset display
+        this.model.showCharges = true;
+        this.model.showField = false;
+        this.model.isGrounded = false;
         
-        this.view.updateGroundButton(this.model.isGrounded);
+        // Force UI update
         this.view.updateInfoPanel();
     }
     

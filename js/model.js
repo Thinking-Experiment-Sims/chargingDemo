@@ -58,15 +58,35 @@ class ElectrostaticsModel {
      * Reset the simulation to its initial state
      */
     reset() {
+        // Reset all charges
         this.rodCharge = 5.0;
         this.ballCharge = 0.0;
-        this.rodPos = { x: 0, y: 100 };
+        
+        // Reset positions
+        this.rodPos = { x: 100, y: 100 };
         this.ballPos = { ...this.ballRestPos };
         this.ballVelocity = { x: 0, y: 0 };
+        
+        // Reset states
         this.isGrounded = false;
         this.chargingMode = "none";
         this.isInContact = false;
         this.inducedCharge = 0;
+        
+        // Clear all electron visualizations
+        this.groundingElectrons = [];
+        this.lastGroundingTime = 0;
+        
+        if (this.conductionElectrons) {
+            this.conductionElectrons = [];
+        }
+        
+        if (this.inductionElectrons) {
+            this.inductionElectrons = [];
+        }
+        
+        // Reset any force calculations
+        this.fieldLines = [];
     }
     
     /**
@@ -160,6 +180,10 @@ class ElectrostaticsModel {
             // For negative rod: electrons enter ball (ball becomes more negative)
             this.ballCharge += chargeTransferAmount;
             this.rodCharge -= chargeTransferAmount * 0.2; // Rod loses less charge due to its larger size
+            
+            // When the ball has acquired a significant charge of the same type as the rod,
+            // ensure a repulsive force is generated between them in the calculateElectrostaticForce method.
+            // No code needed here - this comment is for explanation purposes.
         }
         
         // Update conduction electrons
@@ -244,7 +268,7 @@ class ElectrostaticsModel {
      */
     calculateElectrostaticForce() {
         // No force if both charges are zero
-        if (this.rodCharge === 0 || (this.ballCharge === 0 && !this.isInContact && this.chargingMode !== "induction")) {
+        if (this.rodCharge === 0 || (this.ballCharge === 0 && !this.isInContact && this.chargingMode !== "induction" && this.chargingMode !== "conduction")) {
             return { x: 0, y: 0 };
         }
         
@@ -256,33 +280,31 @@ class ElectrostaticsModel {
         const dist = this.distance(rodCenter, this.ballPos);
         const distSquared = Math.pow(dist, 2);
         
-        // Determine effective charge for force calculation
-        let effectiveBallCharge = this.ballCharge;
+        // CASE 1: Conduction mode BEFORE contact - ball should be initially attracted due to polarization
+        if (this.chargingMode === "conduction" && !this.isInContact && Math.abs(this.ballCharge) < 0.1) {
+            // Similar to induction - ball is attracted to rod through polarization
+            const inductionStrength = Math.min(1.0, 150 / dist); // Stronger when closer
+            const forceMagnitude = this.k * Math.abs(this.rodCharge) * inductionStrength * 0.5 / distSquared;
+            
+            // Direction is always toward rod (attractive) before contact due to polarization
+            const dx = rodCenter.x - this.ballPos.x;
+            const dy = rodCenter.y - this.ballPos.y;
+            const normalizationFactor = dist === 0 ? 0 : dist;
+            
+            return {
+                x: forceMagnitude * dx / normalizationFactor,
+                y: forceMagnitude * dy / normalizationFactor
+            };
+        }
         
-        // For induction, use induced charge for force calculation
-        if (this.chargingMode === "induction" && !this.isInContact) {
-            // In induction, there's always attraction regardless of the rod's charge
-            // This is because opposite charges are induced on the near side of the ball
-            this.inducedCharge = -this.rodCharge * 0.5 * (1 / (1 + dist/100));
-            
-            // If grounded, the ball can get an opposite charge through induction
-            if (this.isGrounded) {
-                effectiveBallCharge = -this.rodCharge * 0.3 * (1 / (1 + dist/100));
-            } else {
-                // For non-grounded induction, polarization creates attraction
-                // The induced charge is always opposite to the rod charge
-                effectiveBallCharge = this.inducedCharge;
-            }
-        } else if (this.chargingMode === "conduction") {
-            // For conduction, use actual ball charge
-            effectiveBallCharge = this.ballCharge;
-            
-            // If charges have same sign and are large enough, ensure proper repulsion
-            if (this.rodCharge * this.ballCharge > 0 && Math.abs(this.ballCharge) > 0.1) {
+        // CASE 2: Conduction mode after charge transfer - ensure repulsion when like charges
+        if (this.chargingMode === "conduction" && Math.abs(this.ballCharge) > 0.1) {
+            // Check if the ball and rod have the same charge sign
+            const sameSign = (this.rodCharge * this.ballCharge > 0);
+            if (sameSign) {
                 // Calculate repulsive force based on Coulomb's law
-                // Use a lower value for conduction to prevent excessive movement
                 const forceMagnitude = Math.min(
-                    0.5, // Maximum force allowed for repulsion during conduction
+                    1.5, // Higher max force to ensure visible repulsion
                     this.k * Math.abs(this.rodCharge * this.ballCharge) / distSquared
                 );
                 
@@ -298,23 +320,71 @@ class ElectrostaticsModel {
             }
         }
         
-        // Force magnitude using Coulomb's law
-        // Apply a force limit to prevent excessive movement
+        // CASE 3: Ball has significant pre-existing charge
+        // This takes priority for charged balls when not in conduction mode
+        if (Math.abs(this.ballCharge) >= 0.1 && this.chargingMode !== "conduction") {
+            // Standard Coulomb's law for charged objects
+            const forceMagnitude = Math.min(
+                1.0, // Cap the force to prevent excessive movement
+                this.k * Math.abs(this.rodCharge * this.ballCharge) / distSquared
+            );
+            
+            // Like charges repel, unlike charges attract
+            const direction = (this.rodCharge * this.ballCharge > 0) ? -1 : 1;
+            
+            const dx = this.ballPos.x - rodCenter.x;
+            const dy = this.ballPos.y - rodCenter.y;
+            const normalizationFactor = dist === 0 ? 0 : dist;
+            
+            return {
+                x: direction * forceMagnitude * dx / normalizationFactor,
+                y: direction * forceMagnitude * dy / normalizationFactor
+            };
+        }
+        
+        // CASE 4: Induction with ungrounded ball
+        if (this.chargingMode === "induction" && !this.isGrounded && !this.isInContact) {
+            // Force is always attractive in induction without grounding
+            // Scale force based on rod charge and distance
+            const inductionStrength = Math.min(1.0, 150 / dist); // Stronger when closer
+            const forceMagnitude = this.k * Math.abs(this.rodCharge) * inductionStrength * 0.5 / distSquared;
+            
+            // Direction is always toward rod (attractive)
+            const dx = rodCenter.x - this.ballPos.x;
+            const dy = rodCenter.y - this.ballPos.y;
+            const normalizationFactor = dist === 0 ? 0 : dist;
+            
+            return {
+                x: forceMagnitude * dx / normalizationFactor,
+                y: forceMagnitude * dy / normalizationFactor
+            };
+        }
+        
+        // CASE 5: Induction with grounded ball
+        if (this.chargingMode === "induction" && this.isGrounded && !this.isInContact) {
+            const inductionStrength = Math.min(1.0, 150 / dist);
+            const forceMagnitude = this.k * Math.abs(this.rodCharge) * inductionStrength * 0.4 / distSquared;
+            
+            // Direction is always toward rod (attractive) for grounded induction
+            const dx = rodCenter.x - this.ballPos.x;
+            const dy = rodCenter.y - this.ballPos.y;
+            const normalizationFactor = dist === 0 ? 0 : dist;
+            
+            return {
+                x: forceMagnitude * dx / normalizationFactor,
+                y: forceMagnitude * dy / normalizationFactor
+            };
+        }
+        
+        // Default force calculation for other cases
         const maxForceMagnitude = 1.0;
         const forceMagnitude = Math.min(
             maxForceMagnitude,
-            this.k * Math.abs(this.rodCharge * effectiveBallCharge) / distSquared
+            this.k * Math.abs(this.rodCharge * this.ballCharge) / distSquared
         );
         
-        // Direction of force
-        // In induction (without grounding), always attract regardless of rod charge
-        let direction;
-        if (this.chargingMode === "induction" && !this.isGrounded && !this.isInContact) {
-            direction = 1; // Always attract in induction mode (opposite charges facing each other)
-        } else {
-            // Normal Coulomb's law direction - like charges repel, unlike attract
-            direction = (this.rodCharge * effectiveBallCharge > 0) ? -1 : 1;
-        }
+        // Direction of force: like charges repel, unlike attract
+        const direction = (this.rodCharge * this.ballCharge > 0) ? -1 : 1;
         
         // Calculate force components
         const dx = this.ballPos.x - rodCenter.x;
@@ -365,8 +435,9 @@ class ElectrostaticsModel {
                 this.addInductionElectron(electronFlowDirection);
                 
                 // Update ball charge (ball acquires charge opposite to rod)
-                const inductionRate = 0.03;
-                const targetCharge = -Math.sign(this.rodCharge) * Math.min(Math.abs(this.rodCharge) * 0.3, 3.0);
+                // Using a stronger charge transfer rate to ensure visible charge changes
+                const inductionRate = 0.08;
+                const targetCharge = -Math.sign(this.rodCharge) * Math.min(Math.abs(this.rodCharge) * 0.5, 3.0);
                 this.ballCharge += (targetCharge - this.ballCharge) * inductionRate;
             }
             
@@ -784,9 +855,9 @@ class ElectrostaticsModel {
             isDistributed: false            // Whether charge is unevenly distributed
         };
         
-        // Only show charge distribution in induction mode and when not in contact
-        // This prevents flickering during conduction
-        if (this.chargingMode === "induction" && !this.isInContact) {
+        // Only show charge distribution in induction mode, when not in contact
+        // and when ball is not already charged by previous induction with grounding
+        if (this.chargingMode === "induction" && !this.isInContact && Math.abs(this.ballCharge) < 0.5) {
             const rodCenter = {
                 x: this.rodPos.x + this.rodSize.width / 2,
                 y: this.rodPos.y + this.rodSize.height / 2
@@ -798,17 +869,35 @@ class ElectrostaticsModel {
             
             // Only show charge separation if the rod is close enough
             if (dist < 200) {
-                const inductionStrength = Math.min(1.0, 150 / dist); // Stronger when closer
-                const separationAmount = this.rodCharge * inductionStrength * 0.5;
+                // Based on physics explanation:
+                // - Negative rod: Repels electrons to far side (near side is positive, far side is negative)
+                // - Positive rod: Attracts electrons to near side (near side is negative, far side is positive)
+                
+                // Higher numbers for better visibility, scaled by distance
+                const inductionStrength = Math.min(2.0, 200 / dist);
                 
                 if (isRodLeftOfBall) {
                     // Rod is on the left side of the ball
-                    distribution.leftSide = -separationAmount;  // Opposite charge of rod
-                    distribution.rightSide = separationAmount;  // Same charge as rod
+                    if (this.rodCharge > 0) {
+                        // Positive rod: Attracts electrons to near side (left)
+                        distribution.leftSide = -Math.abs(this.rodCharge) * inductionStrength * 0.5; // Negative (electrons)
+                        distribution.rightSide = Math.abs(this.rodCharge) * inductionStrength * 0.5; // Positive (electron deficient)
+                    } else {
+                        // Negative rod: Repels electrons to far side (right)
+                        distribution.leftSide = Math.abs(this.rodCharge) * inductionStrength * 0.5; // Positive (electron deficient)
+                        distribution.rightSide = -Math.abs(this.rodCharge) * inductionStrength * 0.5; // Negative (electrons)
+                    }
                 } else {
                     // Rod is on the right side of the ball
-                    distribution.leftSide = separationAmount;   // Same charge as rod
-                    distribution.rightSide = -separationAmount; // Opposite charge of rod
+                    if (this.rodCharge > 0) {
+                        // Positive rod: Attracts electrons to near side (right)
+                        distribution.leftSide = Math.abs(this.rodCharge) * inductionStrength * 0.5; // Positive (electron deficient)
+                        distribution.rightSide = -Math.abs(this.rodCharge) * inductionStrength * 0.5; // Negative (electrons)
+                    } else {
+                        // Negative rod: Repels electrons to far side (left)
+                        distribution.leftSide = -Math.abs(this.rodCharge) * inductionStrength * 0.5; // Negative (electrons)
+                        distribution.rightSide = Math.abs(this.rodCharge) * inductionStrength * 0.5; // Positive (electron deficient)
+                    }
                 }
                 
                 distribution.isDistributed = true;

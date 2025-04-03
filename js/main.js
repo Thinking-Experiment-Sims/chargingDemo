@@ -18,66 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start the simulation
     electrostaticsController.start();
     
-    // Create and add a rod image to the img directory
-    createRodImage();
-    
     // Add description and instructions text under the simulation
     addInstructionsText();
 });
-
-/**
- * Create a rod image programmatically if one doesn't exist
- * This ensures the simulation works even if no rod.png is available
- */
-function createRodImage() {
-    // Create a canvas to generate the rod image
-    const canvas = document.createElement('canvas');
-    canvas.width = 100;
-    canvas.height = 400;
-    const ctx = canvas.getContext('2d');
-    
-    // Draw a rod shape
-    ctx.fillStyle = '#888888';
-    
-    // Handle part
-    ctx.fillRect(30, 300, 40, 100);
-    
-    // Rod part with gradient
-    const gradient = ctx.createLinearGradient(0, 0, 100, 0);
-    gradient.addColorStop(0, '#777777');
-    gradient.addColorStop(0.5, '#dddddd');
-    gradient.addColorStop(1, '#777777');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(20, 20, 60, 280);
-    
-    // Add a border
-    ctx.strokeStyle = '#555555';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(20, 20, 60, 280);
-    ctx.strokeRect(30, 300, 40, 100);
-    
-    // Convert to data URL
-    const dataURL = canvas.toDataURL('image/png');
-    
-    // Attempt to save the image (this might not work due to browser security,
-    // but the image will still be available via data URL)
-    const rodImage = new Image();
-    rodImage.src = dataURL;
-    rodImage.onload = function() {
-        // Create a temporary link to download the image
-        const link = document.createElement('a');
-        link.download = 'rod.png';
-        link.href = dataURL;
-        
-        // Try to save the file (this might be blocked by browser security)
-        try {
-            link.click();
-        } catch (e) {
-            console.log('Rod image created but not saved to disk. Using in-memory version.');
-        }
-    };
-}
 
 /**
  * Add educational text and instructions about electrostatic charging

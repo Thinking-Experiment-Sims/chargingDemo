@@ -44,8 +44,8 @@ class ElectrostaticsView {
      * Load the rod image for better visualization
      */
     loadRodImage() {
-        this.rodImage = new Image();
-        this.rodImage.src = 'img/rod.png'; // Will use a fallback if image not available
+        // We no longer use an image for the rod, so this function is empty
+        // but keeping it for compatibility with existing code
     }
     
     /**
@@ -238,14 +238,48 @@ class ElectrostaticsView {
     drawRod() {
         const rodColor = this.getChargeColor(this.model.rodCharge, this.colors.rod);
         
-        // Always draw a basic rod shape regardless of image loading
-        // This ensures the rod is always visible
-        this.ctx.fillStyle = rodColor;
+        // Draw rod as a rectangle with gradient
+        const gradient = this.ctx.createLinearGradient(
+            this.model.rodPos.x, 
+            this.model.rodPos.y, 
+            this.model.rodPos.x + this.model.rodSize.width, 
+            this.model.rodPos.y
+        );
+        
+        // Use color based on charge
+        if (this.model.rodCharge > 0) {
+            // Positive rod (red)
+            gradient.addColorStop(0, 'rgba(231, 76, 60, 0.7)');
+            gradient.addColorStop(0.5, 'rgba(231, 76, 60, 0.9)');
+            gradient.addColorStop(1, 'rgba(231, 76, 60, 0.7)');
+        } else if (this.model.rodCharge < 0) {
+            // Negative rod (blue)
+            gradient.addColorStop(0, 'rgba(52, 152, 219, 0.7)');
+            gradient.addColorStop(0.5, 'rgba(52, 152, 219, 0.9)');
+            gradient.addColorStop(1, 'rgba(52, 152, 219, 0.7)');
+        } else {
+            // Neutral rod (gray)
+            gradient.addColorStop(0, 'rgba(149, 165, 166, 0.7)');
+            gradient.addColorStop(0.5, 'rgba(149, 165, 166, 0.9)');
+            gradient.addColorStop(1, 'rgba(149, 165, 166, 0.7)');
+        }
+        
+        // Fill rod with gradient
+        this.ctx.fillStyle = gradient;
         this.ctx.fillRect(
             this.model.rodPos.x,
             this.model.rodPos.y,
             this.model.rodSize.width,
             this.model.rodSize.height
+        );
+        
+        // Draw rod handle
+        this.ctx.fillStyle = '#8B4513'; // Brown color for handle
+        this.ctx.fillRect(
+            this.model.rodPos.x + this.model.rodSize.width * 0.25,
+            this.model.rodPos.y + this.model.rodSize.height,
+            this.model.rodSize.width * 0.5,
+            this.model.rodSize.height * 0.3
         );
         
         // Add a border to the rod
@@ -256,6 +290,14 @@ class ElectrostaticsView {
             this.model.rodPos.y,
             this.model.rodSize.width,
             this.model.rodSize.height
+        );
+        
+        // Add a border to the handle
+        this.ctx.strokeRect(
+            this.model.rodPos.x + this.model.rodSize.width * 0.25,
+            this.model.rodPos.y + this.model.rodSize.height,
+            this.model.rodSize.width * 0.5,
+            this.model.rodSize.height * 0.3
         );
         
         // Draw charge indicators if enabled

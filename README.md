@@ -14,19 +14,27 @@ This HTML5 application simulates the physics of electrostatic charging through b
 - **Interactive Elements**: Draggable charged rod, hanging ball on a string with realistic motion
 - **Multiple Charging Modes**: Switch between conduction and induction charging methods
 - **Grounding Capability**: Toggle grounding to observe its effect on charge transfer
-- **Adjustable Parameters**: Control rod charge magnitude and polarity
+- **Updated Interactions**: Correctly models all six scenarios of conduction and induction, including grounding effects
 - **Visual Indicators**: Color-coding and +/- symbols to indicate charge polarity and magnitude
 - **Optional Electric Field Visualization**: View electric field lines around charged objects
 - **Educational Content**: Built-in instructions and explanations of key concepts
 
 ## Educational Value
 
-This simulation helps students understand four key differences between conduction and induction:
+This simulation helps students understand the following key principles:
 
-1. **Contact requirement**: Conduction requires direct contact; induction does not
-2. **Charge movement**: Conduction transfers charge; induction redistributes it
-3. **Resulting charge**: Conduction produces same-type charges; induction typically results in opposite charges
-4. **Original charge**: The original object's charge decreases in conduction but remains constant in induction
+1. **Charging by Conduction**:
+   - Direct contact transfers charge between the rod and the ball.
+   - The ball acquires the same type of charge as the rod.
+   - Like charges repel after contact.
+
+2. **Charging by Induction**:
+   - Without grounding, the ball becomes polarized but remains neutral overall.
+   - With grounding, the ball acquires a net charge opposite to that of the rod.
+   - Polarized neutral objects are attracted to charged rods.
+
+3. **Electron Mobility**:
+   - Only electrons move during charging; protons remain fixed.
 
 ## Technical Implementation
 
