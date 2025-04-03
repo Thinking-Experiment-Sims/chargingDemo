@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electrostatic Charging Simulation</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Interactive Electrostatic Charging</h1>
+        <div class="simulation-container">
+            <div id="simulation-canvas"></div>
+        </div>
+        <div class="controls-container">
+            <div class="controls-section">
+                <h3>Charging Mode</h3>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="charging-mode" value="none" checked>
+                        No Charging
+                    </label>
+                    <label>
+                        <input type="radio" name="charging-mode" value="conduction">
+                        Conduction
+                    </label>
+                    <label>
+                        <input type="radio" name="charging-mode" value="induction">
+                        Induction
+                    </label>
+                </div>
+            </div>
+            <div class="controls-section">
+                <h3>Rod Charge</h3>
+                <input type="range" id="charge-slider" min="-10" max="10" value="5" step="1">
+                <div class="slider-labels">
+                    <span>Negative (-)</span>
+                    <span>Neutral</span>
+                    <span>Positive (+)</span>
+                </div>
+            </div>
+            <div class="controls-section">
+                <h3>Ball Options</h3>
+                <button id="ground-toggle">Ground Ball</button>
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="show-charges" checked>
+                        Show Charges
+                    </label>
+                    <label>
+                        <input type="checkbox" id="show-field">
+                        Show Electric Field
+                    </label>
+                </div>
+            </div>
+            <div class="controls-section">
+                <button id="reset-button">Reset Simulation</button>
+                <button id="explanation-button">Show Explanation</button>
+            </div>
+        </div>
+        <div class="information-panel">
+            <h3>Physics Information</h3>
+            <div id="physics-info">
+                <p>Rod Charge: <span id="rod-charge-value">+5</span> μC</p>
+                <p>Ball Charge: <span id="ball-charge-value">0</span> μC</p>
+                <p>Force: <span id="force-value">0</span> N</p>
+                <p>Distance: <span id="distance-value">0</span> cm</p>
+            </div>
+        </div>
+        <div id="explanation-panel" class="explanation-panel" style="display:none;">
+            <div class="explanation-header">
+                <h3>How Electrostatic Charging Works</h3>
+                <button id="close-explanation">×</button>
+            </div>
+            <div class="explanation-content">
+                <h4>Conduction</h4>
+                <p>Conduction occurs when charges physically transfer between objects that are in direct contact. When the charged rod touches the ball:</p>
+                <ul>
+                    <li>Electrons move from one object to the other</li>
+                    <li>Both objects end up with the same type of charge</li>
+                    <li>The original object loses some of its charge</li>
+                </ul>
+                
+                <h4>Induction</h4>
+                <p>Induction occurs without direct contact through charge redistribution:</p>
+                <ul>
+                    <li>A charged rod creates charge separation in a nearby object</li>
+                    <li>If the object is grounded, electrons can flow in or out</li>
+                    <li>When the ground is removed, the object retains an opposite charge</li>
+                    <li>The original object maintains its full charge</li>
+                </ul>
+                
+                <h4>Charge Distribution Visualization</h4>
+                <p>In this simulation, you can see how charges distribute in the ball:</p>
+                <ul>
+                    <li>During induction, the ball shows charge separation (different colors on each side)</li>
+                    <li>In conduction, the charge distributes uniformly (same color throughout)</li>
+                    <li>The + and - symbols represent positive and negative charges</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/model.js"></script>
+    <script src="js/view.js"></script>
+    <script src="js/controller.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
