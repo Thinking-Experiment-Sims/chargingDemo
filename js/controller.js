@@ -101,24 +101,16 @@ class ElectrostaticsController {
     onRodChargeChange(value) {
         const charge = parseFloat(value);
         const previousCharge = this.model.rodCharge;
-        
-        // If the charge sign changed and we're in induction mode,
-        // temporarily clear any transient charges to allow proper new polarization
-        if (Math.sign(charge) !== Math.sign(previousCharge) && this.model.chargingMode === "induction") {
-            // Only reset induction effects, not permanent charges
-            if (this.model.isGrounded) {
-                // When grounded, start building up the opposite charge again
-                // No need to reset completely
-            } else {
-                // When not grounded, reset any polarization effect immediately
-                // This allows proper re-polarization with the new rod charge
-                this.model.inducedCharge = 0;
-            }
-        }
-        
+
+        // Update the rod charge in the model
         this.model.setRodCharge(charge);
-        
-        // Update display in real-time
+
+        // Recalculate forces to ensure the ball reacts dynamically
+        const force = this.model.calculateElectrostaticForce();
+        this.model.ballVelocity.x += force.x * this.model.deltaTime;
+        this.model.ballVelocity.y += force.y * this.model.deltaTime;
+
+        // Update the view to reflect the changes
         this.view.updateInfoPanel();
     }
     
@@ -147,6 +139,14 @@ class ElectrostaticsController {
         this.model.showField = show;
     }
     
+    /**
+     * Handle reset button click
+     */
+    onResetSimulation() {
+        // Call the existing resetSimulation method
+        this.resetSimulation();
+    }
+
     /**
      * Reset the simulation to its initial state
      */

@@ -316,11 +316,7 @@ class ElectrostaticsView {
     drawBall() {
         // Get charge distribution information
         const distribution = this.model.getChargeDistribution();
-        
-        // Clear any previous drawing of the ball to prevent duplication
-        this.ctx.save();
-        this.ctx.globalCompositeOperation = 'source-over';
-        
+
         if (distribution.isDistributed) {
             // Draw ball with separated charges for induction
             // Left half
@@ -337,7 +333,7 @@ class ElectrostaticsView {
             const leftColor = this.getChargeColor(distribution.leftSide, this.colors.ball);
             this.ctx.fillStyle = leftColor;
             this.ctx.fill();
-            
+
             // Right half
             this.ctx.beginPath();
             this.ctx.arc(
@@ -355,7 +351,7 @@ class ElectrostaticsView {
         } else {
             // Draw uniformly charged ball
             const ballColor = this.getChargeColor(this.model.ballCharge, this.colors.ball);
-            
+
             this.ctx.beginPath();
             this.ctx.arc(
                 this.model.ballPos.x,
@@ -367,7 +363,7 @@ class ElectrostaticsView {
             this.ctx.fillStyle = ballColor;
             this.ctx.fill();
         }
-        
+
         // Draw ball outline
         this.ctx.beginPath();
         this.ctx.arc(
@@ -380,9 +376,7 @@ class ElectrostaticsView {
         this.ctx.lineWidth = 2;
         this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
         this.ctx.stroke();
-        
-        this.ctx.restore();
-        
+
         // Draw charge indicators if enabled
         if (this.model.showCharges) {
             if (distribution.isDistributed) {
@@ -395,7 +389,7 @@ class ElectrostaticsView {
                         0.7  // Scale down the number of indicators
                     );
                 }
-                
+
                 if (Math.abs(distribution.rightSide) > 0.05) {
                     this.drawChargeIndicators(
                         this.model.ballPos.x + this.model.ballRadius * 0.5,
@@ -413,12 +407,12 @@ class ElectrostaticsView {
                 );
             }
         }
-        
+
         // Draw ground symbol if grounded
         if (this.model.isGrounded) {
             this.drawGroundSymbol();
         }
-        
+
         // Draw grounding electrons to visualize electron flow
         this.drawGroundingElectrons();
     }
@@ -727,5 +721,30 @@ class ElectrostaticsView {
             this.ctx.lineWidth = 1;
             this.ctx.stroke();
         }
+    }
+
+    /**
+     * Render the charge distribution on the ball
+     * @param {Object} chargeDistribution - Object containing leftSide and rightSide charges
+     */
+    renderChargeDistribution(chargeDistribution) {
+        const ballElement = document.getElementById('ball');
+        if (!ballElement) return;
+
+        // Clear any existing charge indicators
+        ballElement.innerHTML = '';
+
+        // Create left and right charge indicators
+        const leftCharge = document.createElement('div');
+        leftCharge.className = 'charge-indicator left';
+        leftCharge.textContent = chargeDistribution.leftSide.toFixed(2);
+
+        const rightCharge = document.createElement('div');
+        rightCharge.className = 'charge-indicator right';
+        rightCharge.textContent = chargeDistribution.rightSide.toFixed(2);
+
+        // Append indicators to the ball element
+        ballElement.appendChild(leftCharge);
+        ballElement.appendChild(rightCharge);
     }
 }
