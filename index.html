@@ -3,311 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Electrostatic Charging Simulation</title>
+    <title>Electrostatics Simulation: Conduction vs Induction</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/learning-panel.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Interactive Electrostatic Charging</h1>
-        <div class="simulation-container">
-            <div id="simulation-canvas"></div>
-        </div>
-        <div class="controls-container">
-            <div class="controls-section">
-                <h3>Charging Mode</h3>
-                <div class="radio-group">
-                    <label>
-                        <input type="radio" name="charging-mode" value="none" checked>
-                        No Charging
-                    </label>
-                    <label>
-                        <input type="radio" name="charging-mode" value="conduction">
-                        Conduction
-                    </label>
-                    <label>
-                        <input type="radio" name="charging-mode" value="induction">
-                        Induction
-                    </label>
+    <div id="simulation-container">
+        <canvas id="simulation-canvas"></canvas>
+        
+        <div id="controls">
+            <div class="control-group">
+                <h3>Charging Method</h3>
+                <div class="btn-group">
+                    <button id="none-mode" class="active">None</button>
+                    <button id="conduction-mode">Conduction</button>
+                    <button id="induction-mode">Induction</button>
                 </div>
             </div>
-            <div class="controls-section">
-                <h3>Rod Charge</h3>
-                <input type="range" id="charge-slider" min="-10" max="10" value="5" step="1">
+            
+            <div class="control-group">
+                <h3>Rod Charge: <span id="rod-charge-display">+5.0 μC</span></h3>
+                <input type="range" id="rod-charge-slider" min="-10" max="10" step="0.1" value="5">
                 <div class="slider-labels">
-                    <span>Negative (-)</span>
-                    <span>Neutral</span>
-                    <span>Positive (+)</span>
+                    <span>-10 μC</span>
+                    <span>0</span>
+                    <span>+10 μC</span>
                 </div>
             </div>
-            <div class="controls-section">
+            
+            <div class="control-group">
                 <h3>Ball Options</h3>
-                <button id="ground-toggle">Ground Ball</button>
                 <div class="checkbox-group">
-                    <label>
-                        <input type="checkbox" id="show-charges" checked>
-                        Show Charges
-                    </label>
-                    <label>
-                        <input type="checkbox" id="show-field">
-                        Show Electric Field
-                    </label>
+                    <input type="checkbox" id="ground-toggle">
+                    <label for="ground-toggle">Ground Ball</label>
                 </div>
             </div>
-            <div class="controls-section">
-                <button id="reset-button">Reset Simulation</button>
-                <button id="explanation-button">Show Explanation</button>
+            
+            <div class="control-group">
+                <h3>Visualization</h3>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-charges" checked>
+                    <label for="show-charges">Show Charges</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="show-field">
+                    <label for="show-field">Show Electric Field</label>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <button id="reset-btn" class="reset-btn">Reset Simulation</button>
             </div>
         </div>
-        <div class="information-panel">
+        
+        <div id="physics-info">
             <h3>Physics Information</h3>
-            <div id="physics-info">
-                <p>Rod Charge: <span id="rod-charge-value">+5</span> μC</p>
-                <p>Ball Charge: <span id="ball-charge-value">0</span> μC</p>
-                <p>Force: <span id="force-value">0</span> N</p>
-                <p>Distance: <span id="distance-value">0</span> cm</p>
-            </div>
-        </div>
-        <div id="explanation-panel" class="explanation-panel" style="display:none;">
-            <div class="explanation-header">
-                <h3>How Electrostatic Charging Works</h3>
-                <button id="close-explanation">×</button>
-            </div>
-            <div class="explanation-content">
-                <h4>Charging by Conduction</h4>
-                <p>In conduction, a charged rod directly contacts the neutral ball, allowing electrons to flow between them:</p>
-                <ul>
-                    <li><strong>Negatively Charged Rod:</strong> Electrons flow from rod to ball, making the ball negatively charged.</li>
-                    <li><strong>Positively Charged Rod:</strong> Electrons flow from ball to rod, making the ball positively charged.</li>
-                    <li>In both cases, the ball gains the <em>same type</em> of charge as the rod.</li>
-                    <li>After separation, the rod and ball repel each other (like charges repel).</li>
-                </ul>
-                
-                <h4>Charging by Induction</h4>
-                <p>In induction, the charged rod is brought near but doesn't touch the ball:</p>
-                
-                <h5>Without Grounding:</h5>
-                <ul>
-                    <li><strong>Negatively Charged Rod:</strong> Electrons in the ball are repelled to the far side, creating a positive charge on the near side.</li>
-                    <li><strong>Positively Charged Rod:</strong> Electrons in the ball are attracted to the near side, creating a positive charge on the far side.</li>
-                    <li>The ball remains neutral overall but becomes polarized.</li>
-                    <li>The ball is always attracted to the rod due to the opposite charge on the near side.</li>
-                </ul>
-                
-                <h5>With Grounding:</h5>
-                <ul>
-                    <li><strong>Negatively Charged Rod:</strong> Electrons repelled to far side flow to ground, leaving the ball positively charged.</li>
-                    <li><strong>Positively Charged Rod:</strong> Electrons flow from ground into the ball, making it negatively charged.</li>
-                    <li>After removing the ground and then the rod, the ball retains a charge <em>opposite</em> to that of the rod.</li>
-                    <li>The charged ball is still attracted to the rod.</li>
-                </ul>
-                
-                <h4>Key Principle</h4>
-                <p>Electron movement explains all behaviors. Electrons (negative charge) move from areas of high electron density to areas with low electron density (or to/from ground when available).</p>
+            <div id="info-content">
+                <p>Ball Charge: <span id="ball-charge-display">0.00 μC</span></p>
+                <p>Electrostatic Force: <span id="force-display">0.00 N</span></p>
+                <p>Status: <span id="status-display">Neutral ball</span></p>
             </div>
         </div>
         
-        <!-- New Detailed Explanation Section -->
-        <div class="detailed-explanation">
-            <h2>Understanding Electrostatics: The Science Behind the Demo</h2>
-            
-            <div class="explanation-tab">
-                <button class="tablinks active" onclick="openTab(event, 'conduction-tab')">Conduction</button>
-                <button class="tablinks" onclick="openTab(event, 'induction-tab')">Induction</button>
-                <button class="tablinks" onclick="openTab(event, 'grounding-tab')">Grounding</button>
-                <button class="tablinks" onclick="openTab(event, 'summary-tab')">Summary</button>
+        <!-- New Activity and Assessment Panel -->
+        <div id="learning-panel">
+            <div class="panel-tabs">
+                <button id="tab-activity" class="tab-btn active">Activity</button>
+                <button id="tab-quiz" class="tab-btn">Quiz</button>
+                <button id="tab-close" class="tab-btn close-btn">×</button>
             </div>
-            
-            <div id="conduction-tab" class="tabcontent" style="display:block;">
-                <h3>Charging by Conduction</h3>
-                
-                <div class="scenario-container">
-                    <div class="scenario">
-                        <h4>Scenario 1: Negatively Charged Rod</h4>
-                        <img src="img/conduction-negative.svg" alt="Conduction with negative rod" class="scenario-img">
-                        <ul>
-                            <li><strong>Electron Flow:</strong> Electrons flow from the negatively charged rod to the neutral ball.</li>
-                            <li><strong>Net Charge:</strong> The ball gains excess electrons and becomes negatively charged.</li>
-                            <li><strong>Force:</strong> After contact, both the rod and ball are negatively charged, causing repulsion.</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="scenario">
-                        <h4>Scenario 2: Positively Charged Rod</h4>
-                        <img src="img/conduction-positive.svg" alt="Conduction with positive rod" class="scenario-img">
-                        <ul>
-                            <li><strong>Electron Flow:</strong> Electrons flow from the neutral ball to the positively charged rod.</li>
-                            <li><strong>Net Charge:</strong> The ball loses electrons and becomes positively charged (electron deficient).</li>
-                            <li><strong>Force:</strong> After contact, both the rod and ball are positively charged, causing repulsion.</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="key-point">
-                    <p><strong>Important:</strong> In conduction, direct contact allows electron transfer, and the ball always acquires the same type of charge as the rod.</p>
-                </div>
+            <div id="activity-content" class="panel-content active">
+                <!-- Activity content will be loaded here -->
             </div>
-            
-            <div id="induction-tab" class="tabcontent">
-                <h3>Charging by Induction</h3>
-                
-                <div class="scenario-container">
-                    <div class="scenario">
-                        <h4>Scenario 3: Negatively Charged Rod (No Grounding)</h4>
-                        <img src="img/induction-negative.svg" alt="Induction with negative rod" class="scenario-img">
-                        <ul>
-                            <li><strong>Electron Redistribution:</strong> Electrons in the ball are repelled to the far side.</li>
-                            <li><strong>Net Charge:</strong> The ball remains neutral overall but becomes polarized (positive near side, negative far side).</li>
-                            <li><strong>Force:</strong> The ball is attracted to the rod because the positive near side is closer to the rod than the negative far side.</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="scenario">
-                        <h4>Scenario 5: Positively Charged Rod (No Grounding)</h4>
-                        <img src="img/induction-positive.svg" alt="Induction with positive rod" class="scenario-img">
-                        <ul>
-                            <li><strong>Electron Redistribution:</strong> Electrons in the ball are attracted to the near side.</li>
-                            <li><strong>Net Charge:</strong> The ball remains neutral overall but becomes polarized (negative near side, positive far side).</li>
-                            <li><strong>Force:</strong> The ball is attracted to the rod because the negative near side is closer to the rod than the positive far side.</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="key-point">
-                    <p><strong>Important:</strong> In induction without grounding, the ball becomes polarized but remains neutral overall. The ball is always attracted to the rod, regardless of the rod's charge.</p>
-                </div>
-            </div>
-            
-            <div id="grounding-tab" class="tabcontent">
-                <h3>Induction with Grounding</h3>
-                
-                <div class="scenario-container">
-                    <div class="scenario">
-                        <h4>Scenario 4: Negatively Charged Rod with Grounding</h4>
-                        <img src="img/induction-negative-ground.svg" alt="Induction with negative rod and grounding" class="scenario-img">
-                        <ul>
-                            <li><strong>Electron Flow:</strong> Electrons repelled to the far side flow to ground.</li>
-                            <li><strong>Net Charge:</strong> The ball becomes positively charged after grounding is removed.</li>
-                            <li><strong>Force:</strong> The positively charged ball is attracted to the negatively charged rod.</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="scenario">
-                        <h4>Scenario 6: Positively Charged Rod with Grounding</h4>
-                        <img src="img/induction-positive-ground.svg" alt="Induction with positive rod and grounding" class="scenario-img">
-                        <ul>
-                            <li><strong>Electron Flow:</strong> Additional electrons flow from ground into the ball.</li>
-                            <li><strong>Net Charge:</strong> The ball becomes negatively charged after grounding is removed.</li>
-                            <li><strong>Force:</strong> The negatively charged ball is attracted to the positively charged rod.</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="key-point">
-                    <p><strong>Important:</strong> With grounding during induction, the ball acquires a net charge <em>opposite</em> to that of the rod. After removing ground and with the rod still present, the ball is attracted to the rod.</p>
-                </div>
-            </div>
-            
-            <div id="summary-tab" class="tabcontent">
-                <h3>Summary of Electrostatic Charging</h3>
-                
-                <table class="summary-table">
-                    <thead>
-                        <tr>
-                            <th>Rod Charge</th>
-                            <th>Method</th>
-                            <th>Net Charge on Ball</th>
-                            <th>Electrostatic Force</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Negative</td>
-                            <td>Conduction</td>
-                            <td>Negative</td>
-                            <td>Repulsion</td>
-                        </tr>
-                        <tr>
-                            <td>Positive</td>
-                            <td>Conduction</td>
-                            <td>Positive</td>
-                            <td>Repulsion</td>
-                        </tr>
-                        <tr>
-                            <td>Negative</td>
-                            <td>Induction</td>
-                            <td>Neutral (polarized)</td>
-                            <td>Attraction</td>
-                        </tr>
-                        <tr>
-                            <td>Negative + Grounding</td>
-                            <td>Induction</td>
-                            <td>Positive</td>
-                            <td>Attraction</td>
-                        </tr>
-                        <tr>
-                            <td>Positive</td>
-                            <td>Induction</td>
-                            <td>Neutral (polarized)</td>
-                            <td>Attraction</td>
-                        </tr>
-                        <tr>
-                            <td>Positive + Grounding</td>
-                            <td>Induction</td>
-                            <td>Negative</td>
-                            <td>Attraction</td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-                <h4>Key Takeaways</h4>
-                <ul class="takeaways">
-                    <li><strong>Electron mobility:</strong> Only electrons move during charging; protons remain fixed.</li>
-                    <li><strong>Conduction:</strong> Requires direct contact, results in the ball having the same charge type as the rod.</li>
-                    <li><strong>Induction:</strong> Works without contact by polarizing the ball. With grounding, the ball acquires the opposite charge of the rod.</li>
-                    <li><strong>Forces:</strong> Like charges repel; unlike charges attract. Polarized neutral objects are attracted to charged rods.</li>
-                    <li><strong>Grounding:</strong> Provides a path for electrons to flow into or out of the ball, enabling permanent charging during induction.</li>
-                </ul>
-                
-                <div class="experiment-suggestion">
-                    <h4>Try This Experiment</h4>
-                    <ol>
-                        <li>Use induction with a negative rod and grounding to make the ball positively charged.</li>
-                        <li>Switch to "No Charging" mode (remove rod but keep the ball charged).</li>
-                        <li>Bring a positively charged rod near the ball. What happens? Why?</li>
-                        <li>Try the same with a negatively charged rod. Observe the difference.</li>
-                    </ol>
-                </div>
+            <div id="quiz-content" class="panel-content">
+                <!-- Quiz content will be loaded here -->
             </div>
         </div>
+        
+        <!-- Toggle button for Learning Panel -->
+        <button id="show-learning-panel" class="floating-btn">Show Activities</button>
     </div>
-    
-    <script>
-    function openTab(evt, tabName) {
-        // Declare all variables
-        var i, tabcontent, tablinks;
-        
-        // Get all elements with class="tabcontent" and hide them
-        tabcontent = document.getElementsByClassName("tabcontent");
-        for (i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = "none";
-        }
-        
-        // Get all elements with class="tablinks" and remove the class "active"
-        tablinks = document.getElementsByClassName("tablinks");
-        for (i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(" active", "");
-        }
-        
-        // Show the current tab, and add an "active" class to the button that opened the tab
-        document.getElementById(tabName).style.display = "block";
-        evt.currentTarget.className += " active";
-    }
-    </script>
-    
+
     <script src="js/model.js"></script>
     <script src="js/view.js"></script>
     <script src="js/controller.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/learning-panel.js"></script>
 </body>
 </html>
