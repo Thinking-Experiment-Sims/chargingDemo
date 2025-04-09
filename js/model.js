@@ -36,7 +36,7 @@ class ElectrostaticsModel {
         
         // Physics state
         this.isGrounded = false;
-        this.chargingMode = "none"; // "none", "conduction", "induction"
+        this.chargingMode = "conduction"; // "conduction" or "induction"
         this.showCharges = true;
         this.showField = false;
         
@@ -47,9 +47,10 @@ class ElectrostaticsModel {
         this.chargeTransferRate = 0.1; // Rate of charge transfer during conduction
         this.inducedCharge = 0; // Temporary variable for induction simulation
         
-        // Other physics properties - adjusted for smoother motion
-        this.dampingFactor = 0.995; // Increased for less damping = smoother swinging
+        // Other physics properties - adjusted for more controlled motion
+        this.dampingFactor = 0.95; // Increased damping to reduce swinging
         this.deltaTime = 0.05; // Reduced for finer time steps
+        this.stopThreshold = 0.1; // Threshold for stopping motion
         
         // Hanging point for the string
         this.stringAnchor = {
@@ -82,7 +83,7 @@ class ElectrostaticsModel {
         
         // Reset states
         this.isGrounded = false;
-        this.chargingMode = "none";
+        this.chargingMode = "conduction";
         this.isInContact = false;
         this.inducedCharge = 0;
         
@@ -152,10 +153,8 @@ class ElectrostaticsModel {
     toggleGround(isGrounded) {
         this.isGrounded = isGrounded;
         
-        // When grounded, neutralize the ball if in "none" mode
-        if (isGrounded && this.chargingMode === "none") {
-            this.ballCharge = 0;
-        }
+        // Update grounding state
+        this.isGrounded = isGrounded;
     }
     
     /**
@@ -249,11 +248,11 @@ class ElectrostaticsModel {
             
             // Only bounce if moving towards the rod
             if (normalVelocity < 0) {
-                // More energetic bounce to ensure separation
-                const restitution = 0.8;
+                // Less energetic bounce to reduce continuous motion
+                const restitution = 0.3;
                 const bounceVelocity = -normalVelocity * restitution;
                 
-                // Apply bounce impulse
+                // Apply reduced bounce impulse
                 const deltaVelocity = bounceVelocity - normalVelocity;
                 this.ballVelocity.x += deltaVelocity * collision.normal.x;
                 this.ballVelocity.y += deltaVelocity * collision.normal.y;
@@ -332,9 +331,13 @@ class ElectrostaticsModel {
                 const dy = this.ballPos.y - rodCenter.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist > 0) {
-                    // Add repulsive impulse
-                    this.ballVelocity.x += (dx / dist) * 3.0; // Stronger repulsion
-                    this.ballVelocity.y += (dy / dist) * 3.0;
+                    // Add stronger repulsive impulse
+                    const repulsionStrength = 8.0; // Increased from 3.0 to 8.0
+                    this.ballVelocity.x += (dx / dist) * repulsionStrength;
+                    this.ballVelocity.y += (dy / dist) * repulsionStrength;
+                    
+                    // Add an extra upward component to help overcome gravity
+                    this.ballVelocity.y -= 2.0;
                 }
             }
         }
@@ -433,31 +436,49 @@ class ElectrostaticsModel {
         const dist = this.distance(rodCenter, this.ballPos);
         const distSquared = Math.pow(dist, 2);
         
-        // CASE 1: Contact or just after contact - apply immediate force
+        // Vector from rod to ball
+        const dx = this.ballPos.x - rodCenter.x;
+        const dy = this.ballPos.y - rodCenter.y;
+        const normalizationFactor = dist === 0 ? 1 : dist;
+        
+        // Check if the ball and rod have the same charge sign
+        const sameSign = (this.rodCharge * this.ballCharge > 0);
+        
+        // CASE 1: Contact or just after contact - apply simplified smooth repulsion
         if (this.isInContact || dist < this.ballRadius * 1.5 + this.rodSize.width / 2) {
             // Force direction depends on the charges
-            const sameSign = (this.rodCharge * this.ballCharge > 0);
             let forceMagnitude;
-            let dx, dy;
             
             if (sameSign && Math.abs(this.ballCharge) > 0.1) {
-                // Strong repulsion for same sign charges
-                forceMagnitude = 5.0;
-                dx = this.ballPos.x - rodCenter.x;
-                dy = this.ballPos.y - rodCenter.y;
+                // Simplified repulsion for same sign charges - smooth swing away
+                forceMagnitude = 3.0; // Moderate force for smooth motion
+                
+                // Apply a clean, horizontal impulse away from the rod
+                // This ensures a more natural-looking pendulum swing
+                const angle = Math.atan2(dy, dx);
+                const impulseStrength = 5.0;
+                
+                // Set velocity directly rather than accumulating forces
+                // This creates a cleaner, more controlled swing motion
+                this.ballVelocity.x = Math.cos(angle) * impulseStrength;
+                this.ballVelocity.y = Math.sin(angle) * impulseStrength * 0.5; // Reduced vertical component
+                
+                // Set contact flag to false to prevent repeated impulses
+                this.isInContact = false;
+                
+                return {
+                    x: forceMagnitude * dx / normalizationFactor,
+                    y: forceMagnitude * dy / normalizationFactor
+                };
             } else {
                 // Attraction for opposite charges or neutral ball
                 forceMagnitude = 2.0;
-                dx = rodCenter.x - this.ballPos.x;
-                dy = rodCenter.y - this.ballPos.y;
+                
+                return {
+                    x: -forceMagnitude * dx / normalizationFactor, // Direction toward rod
+                    y: -forceMagnitude * dy / normalizationFactor  // Direction toward rod
+                };
             }
-            
-            const normalizationFactor = dist === 0 ? 1 : dist;
-            
-            return {
-                x: forceMagnitude * dx / normalizationFactor,
-                y: forceMagnitude * dy / normalizationFactor
-            };
         }
         
         // CASE 2: Polarization effect - ball should be attracted to rod
@@ -467,41 +488,30 @@ class ElectrostaticsModel {
             const forceMagnitude = Math.abs(this.rodCharge) * inductionStrength * 0.5;
             
             // Direction is always toward rod (attractive) before contact due to polarization
-            const dx = rodCenter.x - this.ballPos.x;
-            const dy = rodCenter.y - this.ballPos.y;
-            const normalizationFactor = dist === 0 ? 1 : dist;
-            
             return {
-                x: forceMagnitude * dx / normalizationFactor,
-                y: forceMagnitude * dy / normalizationFactor
+                x: -forceMagnitude * dx / normalizationFactor, // Direction toward rod
+                y: -forceMagnitude * dy / normalizationFactor  // Direction toward rod
             };
         }
         
-        // CASE 3: Ball has significant charge - apply Coulomb's law
+        // CASE 3: Ball has significant charge - apply simpler force model for smooth motion
         if (Math.abs(this.ballCharge) >= 0.1) {
-            // Check if the ball and rod have the same charge sign
-            const sameSign = (this.rodCharge * this.ballCharge > 0);
-            // Set force magnitude based on charges and distance
-            const forceMagnitude = Math.min(4.0, Math.abs(this.rodCharge * this.ballCharge) * 2.0 / dist);
+            // Simplified force model for visual clarity
+            const forceMagnitude = sameSign ? 2.0 : 1.0;
             
-            // Direction depends on charge signs
-            let dx, dy;
             if (sameSign) {
-                // Like charges repel - force away from rod
-                dx = this.ballPos.x - rodCenter.x;
-                dy = this.ballPos.y - rodCenter.y;
+                // Like charges REPEL - force away from rod
+                return {
+                    x: forceMagnitude * dx / normalizationFactor,  // Direction away from rod
+                    y: forceMagnitude * dy / normalizationFactor   // Direction away from rod
+                };
             } else {
                 // Unlike charges attract - force toward rod
-                dx = rodCenter.x - this.ballPos.x;
-                dy = rodCenter.y - this.ballPos.y;
+                return {
+                    x: -forceMagnitude * dx / normalizationFactor, // Direction toward rod
+                    y: -forceMagnitude * dy / normalizationFactor  // Direction toward rod
+                };
             }
-            
-            const normalizationFactor = dist === 0 ? 1 : dist;
-            
-            return {
-                x: forceMagnitude * dx / normalizationFactor,
-                y: forceMagnitude * dy / normalizationFactor
-            };
         }
         
         // Default case - return minimal force
@@ -549,6 +559,22 @@ class ElectrostaticsModel {
                 const inductionRate = 0.08;
                 const targetCharge = -Math.sign(this.rodCharge) * Math.min(Math.abs(this.rodCharge) * 0.5, 3.0);
                 this.ballCharge += (targetCharge - this.ballCharge) * inductionRate;
+                
+                // If the ball has acquired significant opposite charge, apply a repulsive force
+                // This creates the repulsion effect after grounding with induction
+                if (Math.abs(this.ballCharge) > 0.8 && this.rodCharge * this.ballCharge < 0) {
+                    const dx = this.ballPos.x - rodCenter.x;
+                    const dy = this.ballPos.y - rodCenter.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance > 0) {
+                        // Apply a repulsive impulse to show physical repulsion effect
+                        // For opposite charges, the repulsion happens after grounding as electrons redistribute
+                        const repulsionStrength = 0.5 * Math.abs(this.ballCharge);
+                        this.ballVelocity.x += (dx / distance) * repulsionStrength;
+                        this.ballVelocity.y += (dy / distance) * repulsionStrength;
+                    }
+                }
             }
             
             // Update induction electrons
@@ -556,6 +582,13 @@ class ElectrostaticsModel {
         } else {
             // When not grounded, no net charge change, only polarization
             // This is handled in getChargeDistribution
+            
+            // If the ball has acquired significant opposite charge from previous grounding,
+            // maintain that charge and apply forces accordingly
+            if (Math.abs(this.ballCharge) > 0.5) {
+                // This ball now has a permanent charge and will behave according to normal electrostatics
+                // The force calculations are already handled in calculateElectrostaticForce()
+            }
         }
     }
     
@@ -775,35 +808,10 @@ class ElectrostaticsModel {
         // Calculate total force
         const force = this.calculateTotalForce();
         
-        // If in "none" mode with minimal force, stabilize the ball to prevent oscillation
-        if (this.chargingMode === "none") {
-            const forceMagnitude = Math.sqrt(force.x * force.x + force.y * force.y);
-            if (forceMagnitude < 0.05) {
-                // Apply extra damping to quickly bring ball to rest
-                this.ballVelocity.x *= 0.7;
-                this.ballVelocity.y *= 0.7;
-                
-                // If velocity is very low, just stop the ball completely
-                if (Math.abs(this.ballVelocity.x) < 0.01 && Math.abs(this.ballVelocity.y) < 0.01) {
-                    this.ballVelocity = { x: 0, y: 0 };
-                    
-                    // Gradually move ball back to rest position
-                    const restDx = this.ballRestPos.x - this.ballPos.x;
-                    const restDy = this.ballRestPos.y - this.ballPos.y;
-                    const restDist = Math.sqrt(restDx * restDx + restDy * restDy);
-                    
-                    if (restDist > 1) {
-                        this.ballPos.x += restDx * 0.05;
-                        this.ballPos.y += restDy * 0.05;
-                    } else {
-                        // Snap to rest position
-                        this.ballPos = { ...this.ballRestPos };
-                    }
-                    
-                    // Skip the rest of the physics update
-                    return;
-                }
-            }
+        // Apply general stabilization regardless of mode when forces are minimal
+        const forceMagnitude = Math.sqrt(force.x * force.x + force.y * force.y);
+        if (forceMagnitude < 0.05 && Math.abs(this.ballVelocity.x) < 0.01 && Math.abs(this.ballVelocity.y) < 0.01) {
+            this.ballVelocity = { x: 0, y: 0 };
         }
         
         // Limit the maximum force in induction mode to prevent excessive movement
@@ -828,14 +836,21 @@ class ElectrostaticsModel {
         this.ballVelocity.x += this.ballAcceleration.x * this.deltaTime;
         this.ballVelocity.y += this.ballAcceleration.y * this.deltaTime;
         
-        // Apply damping
+        // Apply stronger damping to reduce continuous swinging
         this.ballVelocity.x *= this.dampingFactor;
         this.ballVelocity.y *= this.dampingFactor;
         
+        // Stop motion if velocity is below threshold
+        if (Math.abs(this.ballVelocity.x) < this.stopThreshold && 
+            Math.abs(this.ballVelocity.y) < this.stopThreshold) {
+            this.ballVelocity.x = 0;
+            this.ballVelocity.y = 0;
+        }
+        
         // Apply additional damping in induction mode
         if (this.chargingMode === "induction") {
-            this.ballVelocity.x *= 0.9;
-            this.ballVelocity.y *= 0.9;
+            this.ballVelocity.x *= 0.8; // Increased damping
+            this.ballVelocity.y *= 0.8;
         }
         
         // Update position: p = p0 + v*t
@@ -861,10 +876,10 @@ class ElectrostaticsModel {
             this.ballVelocity.y -= dotProduct * normalY;
         }
         
-        // Limit maximum oscillation angle to -40 degrees with horizontal
-        // Calculate current angle in degrees (0 is straight down)
+        // Limit maximum oscillation angle to 70 degrees from vertical
+        // Calculate current angle in degrees (0 is vertical down)
         const currentAngle = Math.atan2(dx, -dy) * (180 / Math.PI);
-        const maxAngle = 40;  // Maximum allowed angle in degrees
+        const maxAngle = 70;  // Maximum allowed angle in degrees from vertical
         
         // If angle exceeds max, adjust position to max angle
         if (Math.abs(currentAngle) > maxAngle) {
@@ -1352,6 +1367,46 @@ class ElectrostaticsModel {
             // Move ball back to string length
             this.ballPos.x = this.stringAnchor.x + dirX * this.stringLength;
             this.ballPos.y = this.stringAnchor.y + dirY * this.stringLength;
+        }
+        
+        // Add 70 degree constraint to limit swing angle
+        // Calculate current angle in degrees (0 is vertical down)
+        const dx2 = this.ballPos.x - this.stringAnchor.x;
+        const dy2 = this.ballPos.y - this.stringAnchor.y;
+        const currentAngle = Math.atan2(dx2, dy2) * (180 / Math.PI);
+        const maxAngle = 70;  // Maximum allowed angle in degrees from vertical
+        
+        // If angle exceeds max, adjust position to max angle
+        if (Math.abs(currentAngle) > maxAngle) {
+            // Determine sign of the angle (left or right)
+            const angleSign = currentAngle > 0 ? 1 : -1;
+            // Convert max angle to radians with correct sign
+            const maxAngleRad = angleSign * maxAngle * (Math.PI / 180);
+            
+            // Set ball position at maximum allowed angle
+            this.ballPos.x = this.stringAnchor.x + Math.sin(maxAngleRad) * this.stringLength;
+            this.ballPos.y = this.stringAnchor.y + Math.cos(maxAngleRad) * this.stringLength;
+            
+            // Dampen horizontal velocity when hitting angle limit
+            this.ballVelocity.x *= 0.6;
+            
+            // Recalculate velocity to be tangential to the arc at the maximum angle
+            const tangentAngle = maxAngleRad + (Math.PI/2); // 90 degrees from the string
+            const velocityMagnitude = Math.sqrt(
+                this.ballVelocity.x * this.ballVelocity.x + 
+                this.ballVelocity.y * this.ballVelocity.y
+            );
+            const tangentX = Math.cos(tangentAngle);
+            const tangentY = Math.sin(tangentAngle);
+            
+            // Project current velocity onto tangent
+            const dotProduct = 
+                this.ballVelocity.x * tangentX + 
+                this.ballVelocity.y * tangentY;
+            
+            // Update velocity to be along the tangent
+            this.ballVelocity.x = dotProduct * tangentX * 0.8; // Apply additional damping
+            this.ballVelocity.y = dotProduct * tangentY * 0.8;
         }
     }
 }

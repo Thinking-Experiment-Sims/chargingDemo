@@ -154,7 +154,7 @@ class ElectrostaticsController {
         this.model.reset();
         
         // Reset UI controls to match model state
-        document.querySelector('input[name="charging-mode"][value="none"]').checked = true;
+        document.querySelector('input[name="charging-mode"][value="conduction"]').checked = true;
         document.getElementById('charge-slider').value = 5;
         document.getElementById('ground-toggle').classList.remove('grounded');
         document.getElementById('ground-toggle').textContent = 'Ground Ball';
