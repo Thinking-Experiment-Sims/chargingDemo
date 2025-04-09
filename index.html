@@ -27,34 +27,33 @@
         </header>
 
         <!-- Consolidated main area with everything visible at once -->
-        <div class="all-content-wrapper">
-            <!-- Left panel with simulation and live data -->
+        <div class="all-content-wrapper">        <!-- Left panel with simulation and integrated data display -->
             <div class="left-panel">
                 <div class="simulation-viewport">
                     <div id="simulation-canvas"></div>
-                </div>
-                
-                <!-- Physics data displayed prominently with visual indicators -->
-                <div class="physics-data-bar">
-                    <div class="data-item">
-                        <div class="data-icon"><i class="fas fa-bolt"></i></div>
-                        <div class="data-value"><span id="rod-charge-value">+5</span> μC</div>
-                        <div class="data-label">Rod Charge</div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-icon"><i class="fas fa-circle"></i></div>
-                        <div class="data-value"><span id="ball-charge-value">0</span> μC</div>
-                        <div class="data-label">Ball Charge</div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-icon"><i class="fas fa-arrows-alt-h"></i></div>
-                        <div class="data-value"><span id="force-value">0</span> N</div>
-                        <div class="data-label">Force</div>
-                    </div>
-                    <div class="data-item">
-                        <div class="data-icon"><i class="fas fa-ruler-horizontal"></i></div>
-                        <div class="data-value"><span id="distance-value">0</span> cm</div>
-                        <div class="data-label">Distance</div>
+                    
+                    <!-- Physics data overlaid on the canvas -->
+                    <div class="physics-data-overlay">
+                        <div class="data-item">
+                            <div class="data-icon"><i class="fas fa-bolt"></i></div>
+                            <div class="data-value"><span id="rod-charge-value">+5</span> μC</div>
+                            <div class="data-label">Rod Charge</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-icon"><i class="fas fa-circle"></i></div>
+                            <div class="data-value"><span id="ball-charge-value">0</span> μC</div>
+                            <div class="data-label">Ball Charge</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-icon"><i class="fas fa-arrows-alt-h"></i></div>
+                            <div class="data-value"><span id="force-value">0</span> N</div>
+                            <div class="data-label">Force</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-icon"><i class="fas fa-ruler-horizontal"></i></div>
+                            <div class="data-value"><span id="distance-value">0</span> cm</div>
+                            <div class="data-label">Distance</div>
+                        </div>
                     </div>
                 </div>
             </div>
