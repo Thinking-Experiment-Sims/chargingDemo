@@ -9,6 +9,16 @@ class ElectrostaticsModel {
         this.gravity = 9.8; // Gravity acceleration (m/s²)
         this.ballMass = 0.01; // Ball mass (kg)
         
+        // Physics simulation parameters
+        this.fixedTimeStep = 1/60; // 60 Hz physics update
+        this.maxSubSteps = 3; // Maximum physics substeps
+        this.accumulator = 0; // For fixed timestep
+        this.lastTime = performance.now();
+        
+        // Collision parameters
+        this.restitution = 0.5; // Bounciness
+        this.frictionCoef = 0.1; // Friction coefficient
+        
         // Charges
         this.rodCharge = 5.0; // Initial rod charge (positive)
         this.ballCharge = 0.0; // Initially neutral
@@ -20,6 +30,9 @@ class ElectrostaticsModel {
         this.stringLength = 150; // Length of hanging string
         this.rodSize = { width: 40, height: 120 }; // Rod dimensions - bigger for visibility
         this.ballRadius = 30; // Ball radius
+        
+        // Previous position for continuous collision detection
+        this.prevBallPos = { x: 400, y: 250 };
         
         // Physics state
         this.isGrounded = false;
@@ -167,7 +180,7 @@ class ElectrostaticsModel {
     
     /**
      * Check if the rod and ball are in contact
-     * @returns {boolean} True if in contact
+     * @returns {Object} Collision data if in contact, or false if not
      */
     checkContact() {
         // Treat the rod as a rectangle and the ball as a circle
@@ -182,32 +195,100 @@ class ElectrostaticsModel {
         
         // Check for collision (if distance is less than ball radius)
         if (distSquared < this.ballRadius * this.ballRadius) {
-            // Calculate penetration depth
             const dist = Math.sqrt(distSquared);
             const overlap = this.ballRadius - dist;
             
+            // Calculate normal vector (direction from closest point on rod to ball center)
+            let normalX, normalY;
+            
             if (dist > 0) {
-                // Calculate normal vector
-                const nx = distX / dist;
-                const ny = distY / dist;
-                
-                // Push ball out to prevent overlap
-                this.ballPos.x += nx * overlap * 1.1;
-                this.ballPos.y += ny * overlap * 1.1;
-                
-                // Add velocity to simulate collision
-                this.ballVelocity.x += nx * 2.0;
-                this.ballVelocity.y += ny * 2.0;
+                normalX = distX / dist;
+                normalY = distY / dist;
             } else {
-                // Fallback if ball is exactly at closest point
-                this.ballPos.x += this.ballRadius;
-                this.ballPos.y += this.ballRadius;
+                // Fallback if ball is exactly at closest point (rare)
+                normalX = 1;
+                normalY = 0;
             }
             
-            return true;
+            return {
+                collision: true,
+                distance: dist,
+                overlap: overlap,
+                normalX: normalX,
+                normalY: normalY,
+                contactX: closestX,
+                contactY: closestY
+            };
         }
         
-        return false;
+        return {
+            collision: false
+        };
+    }
+    
+    /**
+     * Improved collision resolution to prevent overlap
+     */
+    resolveCollision() {
+        const collision = this.checkCollision();
+        
+        if (collision.collision) {
+            // Increase separation to prevent any possibility of overlap
+            const separationBuffer = 1.0; // Increased buffer for more reliable separation
+            
+            // Move ball out of collision
+            this.ballPos.x = collision.point.x + 
+                            collision.normal.x * (this.ballRadius + separationBuffer);
+            this.ballPos.y = collision.point.y + 
+                            collision.normal.y * (this.ballRadius + separationBuffer);
+            
+            // Calculate velocity along normal
+            const normalVelocity = 
+                this.ballVelocity.x * collision.normal.x + 
+                this.ballVelocity.y * collision.normal.y;
+            
+            // Only bounce if moving towards the rod
+            if (normalVelocity < 0) {
+                // More energetic bounce to ensure separation
+                const restitution = 0.8;
+                const bounceVelocity = -normalVelocity * restitution;
+                
+                // Apply bounce impulse
+                const deltaVelocity = bounceVelocity - normalVelocity;
+                this.ballVelocity.x += deltaVelocity * collision.normal.x;
+                this.ballVelocity.y += deltaVelocity * collision.normal.y;
+                
+                // Add upward impulse to help prevent sticking
+                this.ballVelocity.y -= 1.0;
+                
+                // Reduced friction for smoother interaction
+                const friction = 0.1;
+                const tangent = { 
+                    x: -collision.normal.y,
+                    y: collision.normal.x 
+                };
+                
+                const tangentVelocity = 
+                    this.ballVelocity.x * tangent.x + 
+                    this.ballVelocity.y * tangent.y;
+                    
+                this.ballVelocity.x -= tangentVelocity * tangent.x * friction;
+                this.ballVelocity.y -= tangentVelocity * tangent.y * friction;
+            }
+            
+            // Set contact flag for charge transfer
+            this.isInContact = true;
+            
+            // Double-check that we're really separated after resolution
+            const postCheck = this.checkCollision();
+            if (postCheck.collision) {
+                // If still colliding, push out more aggressively
+                this.ballPos.x += postCheck.normal.x * (postCheck.depth + 2.0);
+                this.ballPos.y += postCheck.normal.y * (postCheck.depth + 2.0);
+            }
+        } else {
+            this.isInContact = false;
+        }
     }
     
     /**
@@ -688,6 +769,9 @@ class ElectrostaticsModel {
      * Update the ball's position and velocity based on physics
      */
     updateBallPhysics() {
+        // First check for collision with rod and resolve it to ensure no overlap
+        this.resolveCollision();
+        
         // Calculate total force
         const force = this.calculateTotalForce();
         
@@ -939,36 +1023,234 @@ class ElectrostaticsModel {
     }
     
     /**
-     * Update the simulation state for a new frame
+     * Main physics step with stronger collision handling
      */
     update() {
-        this.isInContact = this.checkContact();
+        const currentTime = performance.now();
+        const deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.016); // Cap at ~60fps
+        this.lastTime = currentTime;
         
-        // Handle charging based on mode
+        // Physics simulation with substeps for stability
+        const numSubsteps = 3;
+        const subDt = deltaTime / numSubsteps;
+        
+        for (let i = 0; i < numSubsteps; i++) {
+            // 1. Store previous position for collision detection
+            this.prevBallPos = { ...this.ballPos };
+            
+            // 2. Apply forces and update velocity
+            const force = this.calculateTotalForce();
+            this.ballVelocity.x += (force.x / this.ballMass) * subDt;
+            this.ballVelocity.y += (force.y / this.ballMass) * subDt;
+            
+            // 3. Update position with current velocity
+            const proposedX = this.ballPos.x + this.ballVelocity.x * subDt;
+            const proposedY = this.ballPos.y + this.ballVelocity.y * subDt;
+            
+            // 4. Check for collision at proposed position
+            const testPos = { x: proposedX, y: proposedY };
+            const collision = this.checkCollisionAtPosition(testPos);
+            
+            if (collision.collision) {
+                // Don't move to colliding position, instead resolve collision from current position
+                this.resolveCollision();
+            } else {
+                // No collision, accept the proposed position
+                this.ballPos.x = proposedX;
+                this.ballPos.y = proposedY;
+            }
+            
+            // 5. Always enforce string constraint after position update
+            this.enforceStringConstraint();
+            
+            // 6. Apply damping
+            this.ballVelocity.x *= Math.pow(0.98, subDt);
+            this.ballVelocity.y *= Math.pow(0.98, subDt);
+        }
+        
+        // Update simulation effects
         this.handleConduction();
         this.handleInduction();
         this.handleGrounding();
         
-        // Apply repulsion if the ball and rod have the same charge
-        if (this.rodCharge * this.ballCharge > 0) {
-            const rodCenter = {
-                x: this.rodPos.x + this.rodSize.width / 2,
-                y: this.rodPos.y + this.rodSize.height / 2
-            };
-
-            const dx = this.ballPos.x - rodCenter.x;
-            const dy = this.ballPos.y - rodCenter.y;
-            const dist = this.distance(rodCenter, this.ballPos);
-
-            if (dist > 0) {
-                const repulsionForce = 10.0; // Stronger repulsion for clear visualization
-                this.ballVelocity.x += (dx / dist) * repulsionForce;
-                this.ballVelocity.y += (dy / dist) * repulsionForce;
+        if (this.showField) {
+            this.generateElectricField();
+        }
+    }
+    
+    /**
+     * Physics update with fixed timestep
+     * @param {number} dt - Fixed timestep duration
+     */
+    updatePhysics(dt) {
+        // Sub-step the physics for stability
+        const numSubSteps = 3;
+        const subDt = dt / numSubSteps;
+        
+        for (let i = 0; i < numSubSteps; i++) {
+            // 1. First check and resolve collisions
+            this.resolveCollision();
+            
+            // 2. Calculate and apply forces
+            const force = this.calculateTotalForce();
+            
+            // Update acceleration (F = ma -> a = F/m)
+            this.ballAcceleration.x = force.x / this.ballMass;
+            this.ballAcceleration.y = force.y / this.ballMass;
+            
+            // Update velocity using semi-implicit Euler
+            this.ballVelocity.x += this.ballAcceleration.x * subDt;
+            this.ballVelocity.y += this.ballAcceleration.y * subDt;
+            
+            // Apply damping
+            this.ballVelocity.x *= Math.pow(this.dampingFactor, subDt);
+            this.ballVelocity.y *= Math.pow(this.dampingFactor, subDt);
+            
+            // Store current position for continuous collision detection
+            this.prevBallPos = { ...this.ballPos };
+            
+            // Update position
+            this.ballPos.x += this.ballVelocity.x * subDt;
+            this.ballPos.y += this.ballVelocity.y * subDt;
+            
+            // 3. Apply constraints in order
+            this.enforceStringConstraint();
+            
+            // 4. Check for tunneling (continuous collision detection)
+            this.handleContinuousCollision();
+        }
+    }
+    
+    /**
+     * Continuous collision detection between updates
+     */
+    handleContinuousCollision() {
+        // Get the movement vector of the ball
+        const moveX = this.ballPos.x - this.prevBallPos.x;
+        const moveY = this.ballPos.y - this.prevBallPos.y;
+        const moveDist = Math.sqrt(moveX * moveX + moveY * moveY);
+        
+        if (moveDist > this.ballRadius) {
+            // Ball moved more than its radius, check for tunneling
+            const steps = Math.ceil(moveDist / this.ballRadius);
+            const stepX = moveX / steps;
+            const stepY = moveY / steps;
+            
+            let tempPos = { ...this.prevBallPos };
+            for (let i = 0; i < steps; i++) {
+                tempPos.x += stepX;
+                tempPos.y += stepY;
+                
+                // Check collision at intermediate position
+                const collision = this.checkCollisionAtPosition(tempPos);
+                if (collision.collision) {
+                    // Collision found, resolve it
+                    this.ballPos = this.resolveCollisionAtPosition(tempPos, collision);
+                    break;
+                }
             }
         }
+    }
+    
+    /**
+     * Check collision at a specific position
+     * @param {Object} pos - Position to check
+     * @returns {Object} Collision data
+     */
+    checkCollisionAtPosition(pos) {
+        const closestX = Math.max(this.rodPos.x, Math.min(pos.x, this.rodPos.x + this.rodSize.width));
+        const closestY = Math.max(this.rodPos.y, Math.min(pos.y, this.rodPos.y + this.rodSize.height));
         
-        // Update ball physics
-        this.updateBallPhysics();
+        const distX = pos.x - closestX;
+        const distY = pos.y - closestY;
+        const distSquared = distX * distX + distY * distY;
+        
+        if (distSquared < this.ballRadius * this.ballRadius) {
+            const dist = Math.sqrt(distSquared);
+            return {
+                collision: true,
+                normal: dist > 0 ? { x: distX / dist, y: distY / dist } : { x: 1, y: 0 },
+                depth: this.ballRadius - dist,
+                point: { x: closestX, y: closestY }
+            };
+        }
+        
+        return { collision: false };
+    }
+    
+    /**
+     * Resolve collision with improved response
+     */
+    enforceRodCollision() {
+        const collision = this.checkCollisionAtPosition(this.ballPos);
+        
+        if (collision.collision) {
+            // Set contact flag for charge transfer
+            this.isInContact = true;
+            
+            // Separate the objects
+            this.ballPos.x = collision.point.x + collision.normal.x * (this.ballRadius + 0.1); // Small buffer
+            this.ballPos.y = collision.point.y + collision.normal.y * (this.ballRadius + 0.1);
+            
+            // Calculate relative velocity
+            const velDotNormal = 
+                this.ballVelocity.x * collision.normal.x + 
+                this.ballVelocity.y * collision.normal.y;
+            
+            // Only bounce if moving towards the rod
+            if (velDotNormal < 0) {
+                // Calculate reflection vector
+                const reflectionX = this.ballVelocity.x - 2 * velDotNormal * collision.normal.x;
+                const reflectionY = this.ballVelocity.y - 2 * velDotNormal * collision.normal.y;
+                
+                // Apply restitution and update velocity
+                this.ballVelocity.x = reflectionX * this.restitution;
+                this.ballVelocity.y = reflectionY * this.restitution;
+                
+                // Apply friction to tangential velocity
+                const tangentX = -collision.normal.y;
+                const tangentY = collision.normal.x;
+                const velDotTangent = 
+                    this.ballVelocity.x * tangentX + 
+                    this.ballVelocity.y * tangentY;
+                    
+                this.ballVelocity.x -= velDotTangent * tangentX * this.frictionCoef;
+                this.ballVelocity.y -= velDotTangent * tangentY * this.frictionCoef;
+            }
+        } else {
+            this.isInContact = false;
+        }
+    }
+    
+    /**
+     * Update the simulation state for a new frame with improved physics
+     */
+    update() {
+        const currentTime = performance.now();
+        const deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.1); // Cap at 100ms
+        this.lastTime = currentTime;
+        
+        // Accumulate time for fixed timestep
+        this.accumulator += deltaTime;
+        
+        // Perform physics updates with fixed timestep
+        while (this.accumulator >= this.fixedTimeStep) {
+            // Store previous position for continuous collision detection
+            this.prevBallPos = { ...this.ballPos };
+            
+            // Update physics with fixed timestep
+            this.updatePhysics(this.fixedTimeStep);
+            
+            // Handle continuous collision detection
+            this.handleContinuousCollision();
+            
+            this.accumulator -= this.fixedTimeStep;
+        }
+        
+        // Handle charging effects
+        this.handleConduction();
+        this.handleInduction();
+        this.handleGrounding();
         
         // Generate electric field if needed
         if (this.showField) {
@@ -983,5 +1265,93 @@ class ElectrostaticsModel {
     getForce() {
         const force = this.calculateElectrostaticForce();
         return Math.sqrt(force.x * force.x + force.y * force.y);
+    }
+
+    /**
+     * Check for collision using Separating Axis Theorem (SAT)
+     * @returns {Object} Collision information
+     */
+    checkCollision() {
+        // Convert rod to oriented bounding box
+        const rodCorners = [
+            { x: this.rodPos.x, y: this.rodPos.y },
+            { x: this.rodPos.x + this.rodSize.width, y: this.rodPos.y },
+            { x: this.rodPos.x + this.rodSize.width, y: this.rodPos.y + this.rodSize.height },
+            { x: this.rodPos.x, y: this.rodPos.y + this.rodSize.height }
+        ];
+
+        // Find closest point on rod to ball center
+        const closestPoint = this.findClosestPointOnRod(this.ballPos);
+        
+        // Calculate distance and direction from closest point to ball center
+        const dx = this.ballPos.x - closestPoint.x;
+        const dy = this.ballPos.y - closestPoint.y;
+        const distanceSquared = dx * dx + dy * dy;
+        
+        // Check if ball overlaps with rod
+        if (distanceSquared < this.ballRadius * this.ballRadius) {
+            const distance = Math.sqrt(distanceSquared);
+            const overlap = this.ballRadius - distance;
+            
+            // Calculate normal vector (direction to push ball out)
+            const normalX = distance > 0 ? dx / distance : 1;
+            const normalY = distance > 0 ? dy / distance : 0;
+            
+            return {
+                collision: true,
+                point: closestPoint,
+                normal: { x: normalX, y: normalY },
+                depth: overlap
+            };
+        }
+        
+        return { collision: false };
+    }
+    
+    /**
+     * Find the closest point on the rod to a given point
+     * @param {Object} point - Point to check
+     * @returns {Object} Closest point on rod
+     */
+    findClosestPointOnRod(point) {
+        // Clamp point to rod boundaries
+        return {
+            x: Math.max(this.rodPos.x, Math.min(point.x, this.rodPos.x + this.rodSize.width)),
+            y: Math.max(this.rodPos.y, Math.min(point.y, this.rodPos.y + this.rodSize.height))
+        };
+    }
+
+    /**
+     * Enforce string constraint with impulse-based correction
+     */
+    enforceStringConstraint() {
+        const dx = this.ballPos.x - this.stringAnchor.x;
+        const dy = this.ballPos.y - this.stringAnchor.y;
+        const currentLength = Math.sqrt(dx * dx + dy * dy);
+        
+        if (currentLength > this.stringLength) {
+            // Calculate the direction vector of the string
+            const dirX = dx / currentLength;
+            const dirY = dy / currentLength;
+            
+            // Calculate the constraint violation
+            const violation = currentLength - this.stringLength;
+            
+            // Calculate relative velocity along the string direction
+            const velAlongString = 
+                this.ballVelocity.x * dirX + 
+                this.ballVelocity.y * dirY;
+            
+            // Calculate impulse magnitude
+            const impulseMagnitude = -velAlongString + violation / this.fixedTimeStep;
+            
+            // Apply impulse
+            this.ballVelocity.x += impulseMagnitude * dirX;
+            this.ballVelocity.y += impulseMagnitude * dirY;
+            
+            // Move ball back to string length
+            this.ballPos.x = this.stringAnchor.x + dirX * this.stringLength;
+            this.ballPos.y = this.stringAnchor.y + dirY * this.stringLength;
+        }
     }
 }
