@@ -5,101 +5,223 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electrostatic Charging Simulation</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Interactive Electrostatic Charging</h1>
-        <div class="simulation-container">
-            <div id="simulation-canvas"></div>
-        </div>
-        <div class="controls-container">
-            <div class="controls-section">
-                <h3>Charging Mode</h3>
-                <div class="radio-group">
-                    <label>
-                        <input type="radio" name="charging-mode" value="conduction" checked>
-                        Conduction
-                    </label>
-                    <label>
-                        <input type="radio" name="charging-mode" value="induction">
-                        Induction
-                    </label>
+        <header class="app-header">
+            <h1>Interactive Electrostatic Charging</h1>
+            <div class="header-actions">
+                <button id="explanation-button" class="btn-primary" title="Show Explanation">
+                    <i class="fas fa-info-circle"></i> How It Works
+                </button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="simulation-panel">
+                <div class="simulation-viewport">
+                    <div id="simulation-canvas"></div>
+                </div>
+                <div class="information-display">
+                    <div id="physics-info" class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Rod Charge:</div>
+                            <div class="info-value"><span id="rod-charge-value">+5</span> μC</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Ball Charge:</div>
+                            <div class="info-value"><span id="ball-charge-value">0</span> μC</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Force:</div>
+                            <div class="info-value"><span id="force-value">0</span> N</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Distance:</div>
+                            <div class="info-value"><span id="distance-value">0</span> cm</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="controls-section">
-                <h3>Rod Charge</h3>
-                <input type="range" id="charge-slider" min="-10" max="10" value="5" step="1">
-                <div class="slider-labels">
-                    <span>Negative (-)</span>
-                    <span>Neutral</span>
-                    <span>Positive (+)</span>
+            
+            <div class="controls-container">
+                <div class="controls-section">
+                    <h3>Charging Mode</h3>
+                    <div class="control-description">Select how the rod and ball interact</div>
+                    <div class="radio-group">
+                        <label class="radio-button">
+                            <input type="radio" name="charging-mode" value="conduction" checked>
+                            <span class="radio-label">Conduction</span>
+                            <span class="radio-hint">Direct contact</span>
+                        </label>
+                        <label class="radio-button">
+                            <input type="radio" name="charging-mode" value="induction">
+                            <span class="radio-label">Induction</span>
+                            <span class="radio-hint">No contact</span>
+                        </label>
+                    </div>
                 </div>
-            </div>
-            <div class="controls-section">
-                <h3>Ball Options</h3>
-                <button id="ground-toggle">Ground Ball</button>
-                <div class="checkbox-group">
-                    <label>
-                        <input type="checkbox" id="show-charges" checked>
-                        Show Charges
-                    </label>
-                    <label>
-                        <input type="checkbox" id="show-field">
-                        Show Electric Field
-                    </label>
+                
+                <div class="controls-section">
+                    <h3>Rod Charge</h3>
+                    <div class="control-description">Adjust the electrical charge of the rod</div>
+                    <div class="slider-container">
+                        <div class="slider-value negative">-10</div>
+                        <input type="range" id="charge-slider" min="-10" max="10" value="5" step="1" class="styled-slider" aria-label="Rod charge value">
+                        <div class="slider-value positive">+10</div>
+                    </div>
+                    <div class="slider-labels">
+                        <div class="slider-label negative">
+                            <span class="label-icon">−</span>
+                            <span class="label-text">Negative Charge</span>
+                        </div>
+                        <div class="slider-label neutral">
+                            <span class="label-icon">0</span>
+                            <span class="label-text">Neutral</span>
+                        </div>
+                        <div class="slider-label positive">
+                            <span class="label-icon">+</span>
+                            <span class="label-text">Positive Charge</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="controls-section">
-                <button id="reset-button">Reset Simulation</button>
-                <button id="explanation-button">Show Explanation</button>
-            </div>
-        </div>
-        <div class="information-panel">
-            <h3>Physics Information</h3>
-            <div id="physics-info">
-                <p>Rod Charge: <span id="rod-charge-value">+5</span> μC</p>
-                <p>Ball Charge: <span id="ball-charge-value">0</span> μC</p>
-                <p>Force: <span id="force-value">0</span> N</p>
-                <p>Distance: <span id="distance-value">0</span> cm</p>
-            </div>
-        </div>
+                
+                <div class="controls-section">
+                    <h3>Ball Options</h3>
+                    <div class="control-description">Modify the ball's properties</div>
+                    <button id="ground-toggle" class="action-button">
+                        <i class="fas fa-plug"></i> Ground Ball
+                    </button>
+                    
+                    <div class="checkbox-group">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-charges" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Show Charges</span>
+                        </label>
+                        
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-field">
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label">Show Electric Field</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="controls-section action-panel">
+                    <button id="reset-button" class="action-button reset-button">
+                        <i class="fas fa-redo-alt"></i> Reset Simulation
+                    </button>
+                    
+                    <div class="experiment-hint">
+                        <i class="fas fa-lightbulb"></i>
+                        <p>Drag the rod near the ball to observe the electrostatic forces</p>
+                    </div>
+                </div>
+            </div>        </div>
+
         <div id="explanation-panel" class="explanation-panel" style="display:none;">
             <div class="explanation-header">
-                <h3>How Electrostatic Charging Works</h3>
-                <button id="close-explanation">×</button>
+                <h3><i class="fas fa-lightbulb"></i> How Electrostatic Charging Works</h3>
+                <button id="close-explanation" class="close-button" aria-label="Close explanation"><i class="fas fa-times"></i></button>
             </div>
             <div class="explanation-content">
-                <h4>Charging by Conduction</h4>
-                <p>In conduction, a charged rod directly contacts the neutral ball, allowing electrons to flow between them:</p>
-                <ul>
-                    <li><strong>Negatively Charged Rod:</strong> Electrons flow from rod to ball, making the ball negatively charged.</li>
-                    <li><strong>Positively Charged Rod:</strong> Electrons flow from ball to rod, making the ball positively charged.</li>
-                    <li>In both cases, the ball gains the <em>same type</em> of charge as the rod.</li>
-                    <li>After separation, the rod and ball repel each other (like charges repel).</li>
-                </ul>
+                <div class="explanation-nav">
+                    <button class="explanation-nav-btn active" data-target="conduction">Conduction</button>
+                    <button class="explanation-nav-btn" data-target="induction">Induction</button>
+                    <button class="explanation-nav-btn" data-target="grounding">Grounding</button>
+                    <button class="explanation-nav-btn" data-target="key-principles">Key Principles</button>
+                </div>
                 
-                <h4>Charging by Induction</h4>
-                <p>In induction, the charged rod is brought near but doesn't touch the ball:</p>
+                <div class="explanation-section active" id="conduction-section">
+                    <h4><i class="fas fa-plug"></i> Charging by Conduction</h4>
+                    <div class="explanation-card">
+                        <div class="card-visual">
+                            <img src="img/conduction-diagram.svg" alt="Diagram showing conduction charging" class="explanation-img">
+                        </div>
+                        <div class="card-text">
+                            <p>In conduction, a charged rod directly contacts the neutral ball, allowing electrons to flow between them:</p>
+                            <ul class="feature-list">
+                                <li><span class="highlight negative">Negatively Charged Rod:</span> Electrons flow from rod to ball, making the ball negatively charged.</li>
+                                <li><span class="highlight positive">Positively Charged Rod:</span> Electrons flow from ball to rod, making the ball positively charged.</li>
+                                <li>In both cases, the ball gains the <em>same type</em> of charge as the rod.</li>
+                                <li>After separation, the rod and ball repel each other (like charges repel).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
                 
-                <h5>Without Grounding:</h5>
-                <ul>
-                    <li><strong>Negatively Charged Rod:</strong> Electrons in the ball are repelled to the far side, creating a positive charge on the near side.</li>
-                    <li><strong>Positively Charged Rod:</strong> Electrons in the ball are attracted to the near side, creating a positive charge on the far side.</li>
-                    <li>The ball remains neutral overall but becomes polarized.</li>
-                    <li>The ball is always attracted to the rod due to the opposite charge on the near side.</li>
-                </ul>
+                <div class="explanation-section" id="induction-section">
+                    <h4><i class="fas fa-magnet"></i> Charging by Induction</h4>
+                    <div class="explanation-card">
+                        <div class="card-visual">
+                            <img src="img/induction-diagram.svg" alt="Diagram showing induction charging" class="explanation-img">
+                        </div>
+                        <div class="card-text">
+                            <p>In induction, the charged rod is brought near but doesn't touch the ball:</p>
+                            
+                            <h5 class="subheading">Without Grounding:</h5>
+                            <ul class="feature-list">
+                                <li><span class="highlight negative">Negatively Charged Rod:</span> Electrons in the ball are repelled to the far side, creating a positive charge on the near side.</li>
+                                <li><span class="highlight positive">Positively Charged Rod:</span> Electrons in the ball are attracted to the near side, creating a positive charge on the far side.</li>
+                                <li>The ball remains neutral overall but becomes <span class="highlight">polarized</span>.</li>
+                                <li>The ball is always attracted to the rod due to the opposite charge on the near side.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
                 
-                <h5>With Grounding:</h5>
-                <ul>
-                    <li><strong>Negatively Charged Rod:</strong> Electrons repelled to far side flow to ground, leaving the ball positively charged.</li>
-                    <li><strong>Positively Charged Rod:</strong> Electrons flow from ground into the ball, making it negatively charged.</li>
-                    <li>After removing the ground and then the rod, the ball retains a charge <em>opposite</em> to that of the rod.</li>
-                    <li>The charged ball is still attracted to the rod.</li>
-                </ul>
+                <div class="explanation-section" id="grounding-section">
+                    <h4><i class="fas fa-plug"></i> Induction with Grounding</h4>
+                    <div class="explanation-card">
+                        <div class="card-visual">
+                            <img src="img/grounding-diagram.svg" alt="Diagram showing grounding effects" class="explanation-img">
+                        </div>
+                        <div class="card-text">
+                            <ul class="feature-list">
+                                <li><span class="highlight negative">Negatively Charged Rod:</span> Electrons repelled to far side flow to ground, leaving the ball positively charged.</li>
+                                <li><span class="highlight positive">Positively Charged Rod:</span> Electrons flow from ground into the ball, making it negatively charged.</li>
+                                <li>After removing the ground and then the rod, the ball retains a charge <em>opposite</em> to that of the rod.</li>
+                                <li>The charged ball is attracted to the rod (opposite charges attract).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
                 
-                <h4>Key Principle</h4>
-                <p>Electron movement explains all behaviors. Electrons (negative charge) move from areas of high electron density to areas with low electron density (or to/from ground when available).</p>
+                <div class="explanation-section" id="key-principles-section">
+                    <h4><i class="fas fa-key"></i> Key Principles</h4>
+                    <div class="principles-grid">
+                        <div class="principle-card">
+                            <div class="principle-icon"><i class="fas fa-exchange-alt"></i></div>
+                            <h5>Electron Movement</h5>
+                            <p>Only electrons move during charging; protons remain fixed in place.</p>
+                        </div>
+                        
+                        <div class="principle-card">
+                            <div class="principle-icon"><i class="fas fa-arrows-alt-h"></i></div>
+                            <h5>Forces</h5>
+                            <p>Like charges repel each other; unlike charges attract each other.</p>
+                        </div>
+                        
+                        <div class="principle-card">
+                            <div class="principle-icon"><i class="fas fa-balance-scale"></i></div>
+                            <h5>Conservation</h5>
+                            <p>Total charge is conserved during all charging processes.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="try-it-yourself">
+                    <h5><i class="fas fa-flask"></i> Try It Yourself:</h5>
+                    <ol>
+                        <li>Change the rod charge to negative.</li>
+                        <li>Ground the ball and bring the rod near (but don't touch).</li>
+                        <li>While the rod is nearby, unground the ball.</li>
+                        <li>Remove the rod and observe what happens.</li>
+                    </ol>
+                </div>
             </div>
         </div>
         
