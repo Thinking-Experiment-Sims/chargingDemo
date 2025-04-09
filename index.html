@@ -6,6 +6,16 @@
     <title>Electrostatic Charging Simulation</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <style>
+        .explanation-tab {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -52,16 +62,27 @@
             </div>
             <div class="controls-section">
                 <button id="reset-button">Reset Simulation</button>
-                <button id="explanation-button">Show Explanation</button>
             </div>
         </div>
         <div class="information-panel">
-            <h3>Physics Information</h3>
-            <div id="physics-info">
-                <p>Rod Charge: <span id="rod-charge-value">+5</span> μC</p>
-                <p>Ball Charge: <span id="ball-charge-value">0</span> μC</p>
-                <p>Force: <span id="force-value">0</span> N</p>
-                <p>Distance: <span id="distance-value">0</span> cm</p>
+            <div class="info-container">
+                <div class="info-column">
+                    <h3>Physics Information</h3>
+                    <div id="physics-info">
+                        <p>Rod Charge: <span id="rod-charge-value">+5</span> μC</p>
+                        <p>Ball Charge: <span id="ball-charge-value">0</span> μC</p>
+                        <p>Force: <span id="force-value">0</span> N</p>
+                        <p>Distance: <span id="distance-value">0</span> cm</p>
+                    </div>
+                </div>
+                <div class="button-column">
+                    <h3>Navigation</h3>
+                    <button class="nav-button" onclick="openTab(event, 'conduction-tab')">Conduction</button>
+                    <button class="nav-button" onclick="openTab(event, 'induction-tab')">Induction</button>
+                    <button class="nav-button" onclick="openTab(event, 'grounding-tab')">Grounding</button>
+                    <button class="nav-button" onclick="openTab(event, 'summary-tab')">Summary</button>
+                    <button class="nav-button" onclick="openTab(event, 'assessment-tab')">Assessment</button>
+                </div>
             </div>
         </div>
         <div id="explanation-panel" class="explanation-panel" style="display:none;">
@@ -112,6 +133,7 @@
                 <button class="tablinks" onclick="openTab(event, 'induction-tab')">Induction</button>
                 <button class="tablinks" onclick="openTab(event, 'grounding-tab')">Grounding</button>
                 <button class="tablinks" onclick="openTab(event, 'summary-tab')">Summary</button>
+                <button class="tablinks" onclick="openTab(event, 'assessment-tab')">Assessment</button>
             </div>
             
             <div id="conduction-tab" class="tabcontent" style="display:block;">
@@ -299,6 +321,115 @@
         document.getElementById(tabName).style.display = "block";
         evt.currentTarget.className += " active";
     }
+    
+    // Assessment functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const submitBtn = document.getElementById('submit-assessment');
+        const resetBtn = document.getElementById('reset-assessment');
+        const scoreElement = document.getElementById('score');
+        const resultMessage = document.getElementById('result-message');
+        
+        // Define correct answers
+        const correctAnswers = {
+            q1: 'b', // Electrons flow from ball to rod (positive rod)
+            q2: 'b', // Ball becomes positively charged (negative rod with ground)
+            q3: 'b', // Always repel after conduction
+            q4: 'c', // Polarization through induction
+            q5: 'd'  // Remains neutral but charge is redistributed
+        };
+        
+        // Explanation messages
+        const explanations = {
+            q1: {
+                correct: "Correct! When a positively charged rod touches a neutral ball, electrons flow from the ball to the rod (since the rod has a deficiency of electrons).",
+                incorrect: "Incorrect. A positively charged rod has a deficiency of electrons, so electrons will flow from the ball to the rod during contact."
+            },
+            q2: {
+                correct: "Correct! With a negatively charged rod nearby, electrons are repelled to ground, leaving the ball with a positive charge.",
+                incorrect: "Incorrect. A negatively charged rod repels electrons to ground, leaving the ball with a net positive charge."
+            },
+            q3: {
+                correct: "Correct! After charging by conduction, both objects have the same type of charge, so they will always repel.",
+                incorrect: "Incorrect. Conduction charging results in both objects having the same type of charge, which always causes repulsion."
+            },
+            q4: {
+                correct: "Correct! Polarization through induction causes redistribution of charge in the neutral object, creating attraction.",
+                incorrect: "Incorrect. When a charged rod is brought near a neutral ball without touching, it causes polarization (charge separation) through induction."
+            },
+            q5: {
+                correct: "Correct! During polarization, the object remains neutral overall but experiences internal charge redistribution.",
+                incorrect: "Incorrect. Polarization doesn't change the net charge of an object; it only redistributes the existing charges."
+            }
+        };
+        
+        // Submit button handler
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function() {
+                let score = 0;
+                
+                // Check each question
+                for (let i = 1; i <= 5; i++) {
+                    const questionName = 'q' + i;
+                    const selectedOption = document.querySelector(`input[name="${questionName}"]:checked`);
+                    const feedbackElement = document.querySelector(`.${questionName}-feedback`);
+                    
+                    if (selectedOption) {
+                        if (selectedOption.value === correctAnswers[questionName]) {
+                            score++;
+                            feedbackElement.textContent = explanations[questionName].correct;
+                            feedbackElement.className = `feedback ${questionName}-feedback correct`;
+                        } else {
+                            feedbackElement.textContent = explanations[questionName].incorrect;
+                            feedbackElement.className = `feedback ${questionName}-feedback incorrect`;
+                        }
+                    } else {
+                        feedbackElement.textContent = "No answer selected.";
+                        feedbackElement.className = `feedback ${questionName}-feedback unanswered`;
+                    }
+                }
+                
+                // Update score display
+                scoreElement.textContent = score;
+                
+                // Display appropriate message based on score
+                if (score === 5) {
+                    resultMessage.textContent = "Excellent! You have a strong understanding of electrostatic charging.";
+                    resultMessage.className = "excellent-result";
+                } else if (score >= 3) {
+                    resultMessage.textContent = "Good job! You understand most concepts, but review the questions you missed.";
+                    resultMessage.className = "good-result";
+                } else {
+                    resultMessage.textContent = "You may need to review the material. Try experimenting with the simulation more.";
+                    resultMessage.className = "review-result";
+                }
+                
+                // Show results
+                document.getElementById('assessment-results').style.display = 'block';
+            });
+        }
+        
+        // Reset button handler
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                document.getElementById('assessment-form').reset();
+                
+                // Clear all feedback
+                const feedbackElements = document.querySelectorAll('.feedback');
+                feedbackElements.forEach(el => {
+                    el.textContent = '';
+                    el.className = el.className.replace(/\b(correct|incorrect|unanswered)\b/g, '');
+                });
+                
+                // Hide results
+                document.getElementById('assessment-results').style.display = 'none';
+            });
+        }
+        
+        // Initially hide results
+        if (document.getElementById('assessment-results')) {
+            document.getElementById('assessment-results').style.display = 'none';
+        }
+    });
     </script>
     
     <script src="js/model.js"></script>
