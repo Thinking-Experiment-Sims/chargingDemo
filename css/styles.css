@@ -321,12 +321,45 @@ input[type="range"] {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Modal version of explanation panel */
+.explanation-panel.modal-dialog {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); /* Darker, more opaque overlay */
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 0; /* Override the padding from explanation-panel */
+}
+
+.explanation-panel.modal-dialog.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.explanation-panel.modal-dialog .explanation-content {
+    background-color: #ffffff; /* Solid white background */
+    margin: 3% auto;
+    width: 90%;
+    max-width: 800px;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 30px;
+}
+
 .explanation-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #ddd;
     padding-bottom: 10px;
+    background-color: #ffffff; /* Ensure header has solid background */
 }
 
 .explanation-header h3 {
@@ -360,6 +393,15 @@ input[type="range"] {
     background-color: #007bff;
     color: #ffffff;
     opacity: 1;
+}
+
+/* Hide inactive tabs */
+.explanation-section {
+    display: none;
+}
+
+.explanation-section.active {
+    display: block;
 }
 
 .explanation-nav-btn:hover {

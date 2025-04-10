@@ -17,9 +17,6 @@
                 <p class="subtitle">Explore how objects gain and lose electrical charge</p>
             </div>
             <div class="header-actions">
-                <button id="help-button" class="icon-button" title="Help">
-                    <i class="fas fa-question-circle"></i>
-                </button>
                 <button id="explanation-button" class="btn-primary" title="How It Works">
                     <i class="fas fa-info-circle"></i> How Electrostatics Works
                 </button>
@@ -140,24 +137,46 @@
             </div>
         </div>
 
-        <div id="explanation-panel" class="explanation-panel" style="display:none;">
-            <div class="explanation-header">
+        <div id="explanation-panel" class="explanation-panel modal-dialog" style="display:none;">
+            <div class="explanation-header modal-header">
                 <h3><i class="fas fa-lightbulb"></i> How Electrostatic Charging Works</h3>
                 <button id="close-explanation" class="close-button" aria-label="Close explanation"><i class="fas fa-times"></i></button>
             </div>
             <div class="explanation-content">
                 <div class="explanation-nav">
-                    <button class="explanation-nav-btn active" data-target="conduction">Conduction</button>
-                    <button class="explanation-nav-btn" data-target="induction">Induction</button>
-                    <button class="explanation-nav-btn" data-target="grounding">Grounding</button>
-                    <button class="explanation-nav-btn" data-target="key-principles">Key Principles</button>
+                    <button class="explanation-nav-btn active" data-target="conduction" onclick="switchExplanationTab(event, 'conduction')">Conduction</button>
+                    <button class="explanation-nav-btn" data-target="induction" onclick="switchExplanationTab(event, 'induction')">Induction</button>
+                    <button class="explanation-nav-btn" data-target="grounding" onclick="switchExplanationTab(event, 'grounding')">Grounding</button>
+                    <button class="explanation-nav-btn" data-target="key-principles" onclick="switchExplanationTab(event, 'key-principles')">Key Principles</button>
                 </div>
+                
+                <script>
+                function switchExplanationTab(event, tabName) {
+                    // Get all tab buttons and remove the active class
+                    var tabButtons = document.querySelectorAll('.explanation-nav-btn');
+                    for (var i = 0; i < tabButtons.length; i++) {
+                        tabButtons[i].classList.remove('active');
+                    }
+                    
+                    // Get all tab sections and hide them
+                    var tabSections = document.querySelectorAll('.explanation-section');
+                    for (var i = 0; i < tabSections.length; i++) {
+                        tabSections[i].classList.remove('active');
+                    }
+                    
+                    // Add active class to the clicked button
+                    event.currentTarget.classList.add('active');
+                    
+                    // Show the selected tab content
+                    document.getElementById(tabName + '-section').classList.add('active');
+                }
+                </script>
                 
                 <div class="explanation-section active" id="conduction-section">
                     <h4><i class="fas fa-plug"></i> Charging by Conduction</h4>
                     <div class="explanation-card">
                         <div class="card-visual">
-                            <img src="img/conduction-diagram.svg" alt="Diagram showing conduction charging" class="explanation-img">
+                            <img src="Charging with conduction.png" alt="Diagram showing conduction charging" class="explanation-img">
                         </div>
                         <div class="card-text">
                             <p>In conduction, a charged rod directly contacts the neutral ball, allowing electrons to flow between them:</p>
@@ -175,7 +194,7 @@
                     <h4><i class="fas fa-magnet"></i> Charging by Induction</h4>
                     <div class="explanation-card">
                         <div class="card-visual">
-                            <img src="img/induction-diagram.svg" alt="Diagram showing induction charging" class="explanation-img">
+                            <img src="Charging by Induction.png" alt="Diagram showing induction charging" class="explanation-img">
                         </div>
                         <div class="card-text">
                             <p>In induction, the charged rod is brought near but doesn't touch the ball:</p>
@@ -195,7 +214,7 @@
                     <h4><i class="fas fa-plug"></i> Induction with Grounding</h4>
                     <div class="explanation-card">
                         <div class="card-visual">
-                            <img src="img/grounding-diagram.svg" alt="Diagram showing grounding effects" class="explanation-img">
+                            <img src="Grounding.png" alt="Diagram showing grounding effects" class="explanation-img">
                         </div>
                         <div class="card-text">
                             <ul class="feature-list">
@@ -204,6 +223,16 @@
                                 <li>After removing the ground and then the rod, the ball retains a charge <em>opposite</em> to that of the rod.</li>
                                 <li>The charged ball is attracted to the rod (opposite charges attract).</li>
                             </ul>
+                            
+                            <div class="try-it-yourself">
+                                <h5><i class="fas fa-flask"></i> Try It Yourself:</h5>
+                                <ol>
+                                    <li>Change the rod charge to negative.</li>
+                                    <li>Ground the ball and bring the rod near (but don't touch).</li>
+                                    <li>While the rod is nearby, unground the ball.</li>
+                                    <li>Remove the rod and observe what happens.</li>
+                                </ol>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -230,7 +259,7 @@
                         </div>
                     </div>
                 </div>
-                  <div class="try-it-yourself">
+                  <!-- Removed standalone try-it-yourself div as it's now inside the grounding section -->
                     <h5><i class="fas fa-flask"></i> Try It Yourself:</h5>
                     <ol>
                         <li>Change the rod charge to negative.</li>
@@ -272,7 +301,6 @@
                 <div class="scenario-container">
                     <div class="scenario">
                         <h4>Scenario 1: Negatively Charged Rod</h4>
-                        <img src="img/conduction-negative.svg" alt="Conduction with negative rod" class="scenario-img">
                         <ul>
                             <li><strong>Electron Flow:</strong> Electrons flow from the negatively charged rod to the neutral ball.</li>
                             <li><strong>Net Charge:</strong> The ball gains excess electrons and becomes negatively charged.</li>
@@ -282,7 +310,6 @@
                     
                     <div class="scenario">
                         <h4>Scenario 2: Positively Charged Rod</h4>
-                        <img src="img/conduction-positive.svg" alt="Conduction with positive rod" class="scenario-img">
                         <ul>
                             <li><strong>Electron Flow:</strong> Electrons flow from the neutral ball to the positively charged rod.</li>
                             <li><strong>Net Charge:</strong> The ball loses electrons and becomes positively charged (electron deficient).</li>
@@ -302,7 +329,6 @@
                 <div class="scenario-container">
                     <div class="scenario">
                         <h4>Scenario 3: Negatively Charged Rod (No Grounding)</h4>
-                        <img src="img/induction-negative.svg" alt="Induction with negative rod" class="scenario-img">
                         <ul>
                             <li><strong>Electron Redistribution:</strong> Electrons in the ball are repelled to the far side.</li>
                             <li><strong>Net Charge:</strong> The ball remains neutral overall but becomes polarized (positive near side, negative far side).</li>
@@ -312,7 +338,6 @@
                     
                     <div class="scenario">
                         <h4>Scenario 5: Positively Charged Rod (No Grounding)</h4>
-                        <img src="img/induction-positive.svg" alt="Induction with positive rod" class="scenario-img">
                         <ul>
                             <li><strong>Electron Redistribution:</strong> Electrons in the ball are attracted to the near side.</li>
                             <li><strong>Net Charge:</strong> The ball remains neutral overall but becomes polarized (negative near side, positive far side).</li>
@@ -332,7 +357,6 @@
                 <div class="scenario-container">
                     <div class="scenario">
                         <h4>Scenario 4: Negatively Charged Rod with Grounding</h4>
-                        <img src="img/induction-negative-ground.svg" alt="Induction with negative rod and grounding" class="scenario-img">
                         <ul>
                             <li><strong>Electron Flow:</strong> Electrons repelled to the far side flow to ground.</li>
                             <li><strong>Net Charge:</strong> The ball becomes positively charged after grounding is removed.</li>
@@ -342,7 +366,6 @@
                     
                     <div class="scenario">
                         <h4>Scenario 6: Positively Charged Rod with Grounding</h4>
-                        <img src="img/induction-positive-ground.svg" alt="Induction with positive rod and grounding" class="scenario-img">
                         <ul>
                             <li><strong>Electron Flow:</strong> Additional electrons flow from ground into the ball.</li>
                             <li><strong>Net Charge:</strong> The ball becomes negatively charged after grounding is removed.</li>
@@ -453,45 +476,56 @@
         evt.currentTarget.className += " active";
     }
 
-    // Advanced explanation modal functionality
+    // Modal functionality for both explanation panels
     document.addEventListener('DOMContentLoaded', function() {
-        // Get the modal
-        const modal = document.getElementById('advanced-explanation-dialog');
+        // Advanced explanation modal
+        const advancedModal = document.getElementById('advanced-explanation-dialog');
+        const advancedBtn = document.getElementById('advanced-explanation-button');
+        const closeAdvancedBtn = document.getElementById('close-advanced-explanation');
         
-        // Get the button that opens the modal
-        const btn = document.getElementById('advanced-explanation-button');
+        if (advancedBtn) {
+            advancedBtn.addEventListener('click', function() {
+                advancedModal.style.display = "block";
+                document.body.classList.add('modal-open');
+            });
+        }
         
-        // Get the button that closes the modal
-        const closeBtn = document.getElementById('close-advanced-explanation');
+        if (closeAdvancedBtn) {
+            closeAdvancedBtn.addEventListener('click', function() {
+                advancedModal.style.display = "none";
+                document.body.classList.remove('modal-open');
+            });
+        }
         
-        // When the user clicks the button, open the modal
-        btn.addEventListener('click', function() {
-            modal.style.display = "block";
-        });
-        
-        // When the user clicks on the close button, close the modal
-        closeBtn.addEventListener('click', function() {
-            modal.style.display = "none";
-        });
-        
-        // When the user clicks anywhere outside of the modal content, close it
-        window.addEventListener('click', function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        });
-
-        // Also handle the explanation panel
+        // Main explanation panel as a popup
         const explanationPanel = document.getElementById('explanation-panel');
         const explanationButton = document.getElementById('explanation-button');
         const closeExplanationButton = document.getElementById('close-explanation');
 
         explanationButton.addEventListener('click', function() {
             explanationPanel.style.display = "block";
+            document.body.classList.add('modal-open');
+            explanationPanel.classList.add('active');
         });
 
         closeExplanationButton.addEventListener('click', function() {
             explanationPanel.style.display = "none";
+            document.body.classList.remove('modal-open');
+            explanationPanel.classList.remove('active');
+        });
+        
+        // When the user clicks anywhere outside of either modal content, close it
+        window.addEventListener('click', function(event) {
+            if (event.target == explanationPanel) {
+                explanationPanel.style.display = "none";
+                document.body.classList.remove('modal-open');
+                explanationPanel.classList.remove('active');
+            }
+            
+            if (event.target == advancedModal) {
+                advancedModal.style.display = "none";
+                document.body.classList.remove('modal-open');
+            }
         });
     });
     </script>
