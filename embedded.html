@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electrostatic Charging Simulation</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <style>
+        /* Embedded-specific styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .container {
+            height: 100vh;
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+        }
+        
+        .all-content-wrapper {
+            height: calc(100vh - 60px); /* Adjust for smaller header */
+        }
+        
+        .app-header {
+            padding: 10px;
+            height: 40px;
+        }
+        
+        .title-section h1 {
+            font-size: 1.4rem;
+            margin: 0;
+        }
+        
+        .subtitle {
+            font-size: 0.8rem;
+        }
+        
+        /* Make controls more compact */
+        .control-block {
+            margin-bottom: 15px;
+        }
+        
+        .control-block h3 {
+            margin-bottom: 8px;
+        }
+        
+        /* Responsive adjustments for small iframes */
+        @media (max-width: 768px) {
+            .all-content-wrapper {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .left-panel, .right-panel {
+                flex: none;
+                width: 100%;
+            }
+            
+            .left-panel {
+                height: 60vh;
+            }
+            
+            .right-panel {
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Simplified header -->
+        <header class="app-header">
+            <div class="title-section">
+                <h1>Electrostatic Charging Simulator</h1>
+            </div>
+            <div class="header-actions">
+                <button id="explanation-button" class="btn-primary" title="How It Works">
+                    <i class="fas fa-info-circle"></i> How It Works
+                </button>
+            </div>
+        </header>
+
+        <!-- Main content area -->
+        <div class="all-content-wrapper">
+            <!-- Left panel with simulation -->
+            <div class="left-panel">
+                <div class="simulation-viewport">
+                    <div id="simulation-canvas"></div>
+                    
+                    <!-- Physics data overlay -->
+                    <div class="physics-data-overlay">
+                        <div class="data-item">
+                            <div class="data-icon"><i class="fas fa-bolt"></i></div>
+                            <div class="data-value"><span id="rod-charge-value">+5</span> μC</div>
+                            <div class="data-label">Rod Charge</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-icon"><i class="fas fa-circle"></i></div>
+                            <div class="data-value"><span id="ball-charge-value">0</span> μC</div>
+                            <div class="data-label">Ball Charge</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-icon"><i class="fas fa-arrows-alt-h"></i></div>
+                            <div class="data-value"><span id="force-value">0</span> N</div>
+                            <div class="data-label">Force</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-icon"><i class="fas fa-ruler-horizontal"></i></div>
+                            <div class="data-value"><span id="distance-value">0</span> cm</div>
+                            <div class="data-label">Distance</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right panel with controls -->
+            <div class="right-panel">
+                <div class="control-tabs">
+                    <div class="tab active" data-tab="basics">Controls</div>
+                </div>
+                
+                <div class="tab-content" id="basics-content">
+                    <!-- Charging method selection -->
+                    <div class="control-block">
+                        <h3>Charging Method</h3>
+                        <div class="method-buttons">
+                            <label class="method-button">
+                                <input type="radio" name="charging-mode" value="conduction" checked>
+                                <span class="method-icon"><i class="fas fa-plug"></i></span>
+                                <span class="method-name">Conduction</span>
+                            </label>
+                            <label class="method-button">
+                                <input type="radio" name="charging-mode" value="induction">
+                                <span class="method-icon"><i class="fas fa-magnet"></i></span>
+                                <span class="method-name">Induction</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Rod charge slider -->
+                    <div class="control-block">
+                        <h3>Rod Charge</h3>
+                        <div class="charge-slider-container">
+                            <div class="slider-wrap">
+                                <div class="charge-label negative">-</div>
+                                <input type="range" id="charge-slider" min="-10" max="10" value="5" step="1">
+                                <div class="charge-label positive">+</div>
+                            </div>
+                            <div class="charge-value" id="current-charge">+5 μC</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action buttons -->
+                    <div class="control-block">
+                        <h3>Actions</h3>
+                        <div class="action-buttons">
+                            <button id="ground-toggle" class="action-button">
+                                <i class="fas fa-plug"></i> Ground Ball
+                            </button>
+                            <button id="reset-button" class="action-button">
+                                <i class="fas fa-redo-alt"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Visualization toggles -->
+                    <div class="control-block">
+                        <h3>Visualization</h3>
+                        <div class="toggle-options">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="show-charges" checked>
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Show Charges</span>
+                            </label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="show-field">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Show Electric Field</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explanation panel (same as in main file) -->
+        <div id="explanation-panel" class="explanation-panel modal-dialog" style="display:none;">
+            <div class="explanation-header modal-header">
+                <h3><i class="fas fa-lightbulb"></i> How Electrostatic Charging Works</h3>
+                <button id="close-explanation" class="close-button" aria-label="Close explanation"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="explanation-content">
+                <div class="explanation-nav">
+                    <button class="explanation-nav-btn active" data-target="conduction" onclick="switchExplanationTab(event, 'conduction')">Conduction</button>
+                    <button class="explanation-nav-btn" data-target="induction" onclick="switchExplanationTab(event, 'induction')">Induction</button>
+                    <button class="explanation-nav-btn" data-target="grounding" onclick="switchExplanationTab(event, 'grounding')">Grounding</button>
+                    <button class="explanation-nav-btn" data-target="key-principles" onclick="switchExplanationTab(event, 'key-principles')">Key Principles</button>
+                </div>
+                
+                <script>
+                function switchExplanationTab(event, tabName) {
+                    // Get all tab buttons and remove the active class
+                    var tabButtons = document.querySelectorAll('.explanation-nav-btn');
+                    for (var i = 0; i < tabButtons.length; i++) {
+                        tabButtons[i].classList.remove('active');
+                    }
+                    
+                    // Get all tab sections and hide them
+                    var tabSections = document.querySelectorAll('.explanation-section');
+                    for (var i = 0; i < tabSections.length; i++) {
+                        tabSections[i].classList.remove('active');
+                    }
+                    
+                    // Add active class to the clicked button
+                    event.currentTarget.classList.add('active');
+                    
+                    // Show the selected tab content
+                    document.getElementById(tabName + '-section').classList.add('active');
+                }
+                </script>
+                
+                <div class="explanation-section active" id="conduction-section">
+                    <h4><i class="fas fa-plug"></i> Charging by Conduction</h4>
+                    <div class="explanation-card">
+                        <div class="card-visual">
+                            <img src="Charging with conduction.png" alt="Diagram showing conduction charging" class="explanation-img">
+                        </div>
+                        <div class="card-text">
+                            <p>In conduction, a charged rod directly contacts the neutral ball, allowing electrons to flow between them:</p>
+                            <ul class="feature-list">
+                                <li><span class="highlight negative">Negatively Charged Rod:</span> Electrons flow from rod to ball, making the ball negatively charged.</li>
+                                <li><span class="highlight positive">Positively Charged Rod:</span> Electrons flow from ball to rod, making the ball positively charged.</li>
+                                <li>In both cases, the ball gains the <em>same type</em> of charge as the rod.</li>
+                                <li>After separation, the rod and ball repel each other (like charges repel).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="explanation-section" id="induction-section">
+                    <h4><i class="fas fa-magnet"></i> Charging by Induction</h4>
+                    <div class="explanation-card">
+                        <div class="card-visual">
+                            <img src="Charging by Induction.png" alt="Diagram showing induction charging" class="explanation-img">
+                        </div>
+                        <div class="card-text">
+                            <p>In induction, the charged rod is brought near but doesn't touch the ball:</p>
+                            
+                            <h5 class="subheading">Without Grounding:</h5>
+                            <ul class="feature-list">
+                                <li><span class="highlight negative">Negatively Charged Rod:</span> Electrons in the ball are repelled to the far side, creating a positive charge on the near side.</li>
+                                <li><span class="highlight positive">Positively Charged Rod:</span> Electrons in the ball are attracted to the near side, creating a positive charge on the far side.</li>
+                                <li>The ball remains neutral overall but becomes <span class="highlight">polarized</span>.</li>
+                                <li>The ball is always attracted to the rod due to the opposite charge on the near side.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="explanation-section" id="grounding-section">
+                    <h4><i class="fas fa-plug"></i> Induction with Grounding</h4>
+                    <div class="explanation-card">
+                        <div class="card-visual">
+                            <img src="Grounding.png" alt="Diagram showing grounding effects" class="explanation-img">
+                        </div>
+                        <div class="card-text">
+                            <ul class="feature-list">
+                                <li><span class="highlight negative">Negatively Charged Rod:</span> Electrons repelled to far side flow to ground, leaving the ball positively charged.</li>
+                                <li><span class="highlight positive">Positively Charged Rod:</span> Electrons flow from ground into the ball, making it negatively charged.</li>
+                                <li>After removing the ground and then the rod, the ball retains a charge <em>opposite</em> to that of the rod.</li>
+                                <li>The charged ball is attracted to the rod (opposite charges attract).</li>
+                            </ul>
+                            
+                            <div class="try-it-yourself">
+                                <h5><i class="fas fa-flask"></i> Try It Yourself:</h5>
+                                <ol>
+                                    <li>Change the rod charge to negative.</li>
+                                    <li>Ground the ball and bring the rod near (but don't touch).</li>
+                                    <li>While the rod is nearby, unground the ball.</li>
+                                    <li>Remove the rod and observe what happens.</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="explanation-section" id="key-principles-section">
+                    <h4><i class="fas fa-key"></i> Key Principles</h4>
+                    <div class="principles-grid">
+                        <div class="principle-card">
+                            <div class="principle-icon"><i class="fas fa-exchange-alt"></i></div>
+                            <h5>Electron Movement</h5>
+                            <p>Only electrons move during charging; protons remain fixed in place.</p>
+                        </div>
+                        
+                        <div class="principle-card">
+                            <div class="principle-icon"><i class="fas fa-arrows-alt-h"></i></div>
+                            <h5>Forces</h5>
+                            <p>Like charges repel each other; unlike charges attract each other.</p>
+                        </div>
+                        
+                        <div class="principle-card">
+                            <div class="principle-icon"><i class="fas fa-balance-scale"></i></div>
+                            <h5>Conservation</h5>
+                            <p>Total charge is conserved during all charging processes.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // Tab functionality for main tabs (simplified)
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const target = this.getAttribute('data-tab');
+                
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                tabContents.forEach(content => content.classList.add('hidden'));
+                document.getElementById(target + '-content').classList.remove('hidden');
+            });
+        });
+        
+        // Modal functionality for explanation panel
+        const explanationPanel = document.getElementById('explanation-panel');
+        const explanationButton = document.getElementById('explanation-button');
+        const closeExplanationButton = document.getElementById('close-explanation');
+
+        explanationButton.addEventListener('click', function() {
+            explanationPanel.style.display = "block";
+            document.body.classList.add('modal-open');
+            explanationPanel.classList.add('active');
+        });
+
+        closeExplanationButton.addEventListener('click', function() {
+            explanationPanel.style.display = "none";
+            document.body.classList.remove('modal-open');
+            explanationPanel.classList.remove('active');
+        });
+        
+        window.addEventListener('click', function(event) {
+            if (event.target == explanationPanel) {
+                explanationPanel.style.display = "none";
+                document.body.classList.remove('modal-open');
+                explanationPanel.classList.remove('active');
+            }
+        });
+    });
+    </script>
+    
+    <!-- Load simulation scripts -->
+    <script src="js/model.js"></script>
+    <script src="js/view.js"></script>
+    <script src="js/controller.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

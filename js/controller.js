@@ -32,6 +32,15 @@ class ElectrostaticsController {
         const chargeSlider = document.getElementById('charge-slider');
         if (chargeSlider) {
             chargeSlider.addEventListener('input', () => {
+                const value = parseInt(chargeSlider.value);
+                const chargeDisplay = document.getElementById('current-charge');
+                
+                // Update the display with the appropriate class for color
+                if (chargeDisplay) {
+                    chargeDisplay.textContent = (value > 0 ? '+' : '') + value + ' μC';
+                    chargeDisplay.className = 'charge-value ' + (value < 0 ? 'negative' : 'positive');
+                }
+                
                 this.onRodChargeChange(chargeSlider.value);
             });
         }

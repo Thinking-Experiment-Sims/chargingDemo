@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Electrostatic Charging Simulation</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/slider-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
 </head>
@@ -59,7 +60,7 @@
             <div class="right-panel">
                 <div class="control-tabs">
                     <div class="tab active" data-tab="basics">Basic Controls</div>
-                    <div class="tab" data-tab="advanced">Advanced Options</div>
+                    <div class="tab" data-tab="practice">Practice Questions</div>
                 </div>
                 
                 <div class="tab-content" id="basics-content">
@@ -86,9 +87,9 @@
                         <h3>Rod Charge</h3>
                         <div class="charge-slider-container">
                             <div class="slider-wrap">
-                                <div class="charge-label negative">Negative</div>
+                                <div class="charge-label negative" style="color: #3498db;">Negative</div>
                                 <input type="range" id="charge-slider" min="-10" max="10" value="5" step="1">
-                                <div class="charge-label positive">Positive</div>
+                                <div class="charge-label positive" style="color: #e74c3c;">Positive</div>
                             </div>
                             <div class="charge-value" id="current-charge">+5 μC</div>
                         </div>
@@ -105,9 +106,7 @@
                             </button>
                         </div>
                     </div>
-                </div>
-                
-                <div class="tab-content hidden" id="advanced-content">
+                    
                     <div class="control-block">
                         <h3>Visualization Options</h3>
                         <div class="toggle-options">
@@ -123,15 +122,91 @@
                             </label>
                         </div>
                     </div>
+                </div>
+                
+                <div class="tab-content hidden" id="practice-content">
+                    <div class="quiz-intro">
+                        <h3>Test Your Understanding</h3>
+                        <p>Answer these questions to check your understanding of electrostatic charging concepts:</p>
+                    </div>
                     
-                    <div class="hints-block">
-                        <div class="hint-title"><i class="fas fa-lightbulb"></i> Tips</div>
-                        <ul class="hints-list">
-                            <li>Drag the rod near the ball to observe attraction or repulsion</li>
-                            <li>For conduction, touch the rod to the ball to transfer charge</li>
-                            <li>For induction, ground the ball while the rod is nearby</li>
-                            <li>Switch rod polarity to see different effects</li>
-                        </ul>
+                    <div class="quiz-container">
+                        <div class="quiz-question">
+                            <p><strong>1. When a negatively charged rod touches a neutral conducting sphere, the sphere becomes:</strong></p>
+                            <div class="quiz-options">
+                                <label class="quiz-option"><input type="radio" name="q1" value="a"> A) Positively charged</label><br>
+                                <label class="quiz-option"><input type="radio" name="q1" value="b"> B) Negatively charged</label><br>
+                                <label class="quiz-option"><input type="radio" name="q1" value="c"> C) Remains neutral</label><br>
+                                <label class="quiz-option"><input type="radio" name="q1" value="d"> D) Temporarily charged, then returns to neutral</label>
+                            </div>
+                            <div class="answer-feedback" id="feedback-q1" style="display:none;">
+                                <p><strong>Correct Answer: B) Negatively charged</strong></p>
+                                <p>During conduction, electrons flow from the negatively charged rod to the neutral sphere, making the sphere negatively charged.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="quiz-question">
+                            <p><strong>2. When a positively charged rod is brought near (but not touching) a neutral conducting sphere, the sphere will:</strong></p>
+                            <div class="quiz-options">
+                                <label class="quiz-option"><input type="radio" name="q2" value="a"> A) Become positively charged</label><br>
+                                <label class="quiz-option"><input type="radio" name="q2" value="b"> B) Become negatively charged</label><br>
+                                <label class="quiz-option"><input type="radio" name="q2" value="c"> C) Remain neutral overall but become polarized</label><br>
+                                <label class="quiz-option"><input type="radio" name="q2" value="d"> D) Repel the rod</label>
+                            </div>
+                            <div class="answer-feedback" id="feedback-q2" style="display:none;">
+                                <p><strong>Correct Answer: C) Remain neutral overall but become polarized</strong></p>
+                                <p>During induction without grounding, the sphere remains neutral overall but becomes polarized with the near side negative and the far side positive.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="quiz-question">
+                            <p><strong>3. If a positively charged rod is brought near a grounded metal sphere, then the ground connection is removed while the rod is still nearby, the sphere will be:</strong></p>
+                            <div class="quiz-options">
+                                <label class="quiz-option"><input type="radio" name="q3" value="a"> A) Positively charged</label><br>
+                                <label class="quiz-option"><input type="radio" name="q3" value="b"> B) Negatively charged</label><br>
+                                <label class="quiz-option"><input type="radio" name="q3" value="c"> C) Neutral</label><br>
+                                <label class="quiz-option"><input type="radio" name="q3" value="d"> D) Half positive, half negative</label>
+                            </div>
+                            <div class="answer-feedback" id="feedback-q3" style="display:none;">
+                                <p><strong>Correct Answer: B) Negatively charged</strong></p>
+                                <p>With a positively charged rod nearby, electrons flow from ground into the sphere. After removing the ground connection, the sphere has excess electrons and is negatively charged.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="quiz-question">
+                            <p><strong>4. When a neutral object is attracted to a charged object, this is most likely due to:</strong></p>
+                            <div class="quiz-options">
+                                <label class="quiz-option"><input type="radio" name="q4" value="a"> A) The neutral object having the same charge</label><br>
+                                <label class="quiz-option"><input type="radio" name="q4" value="b"> B) Gravitational forces</label><br>
+                                <label class="quiz-option"><input type="radio" name="q4" value="c"> C) Induced polarization in the neutral object</label><br>
+                                <label class="quiz-option"><input type="radio" name="q4" value="d"> D) Magnetic attraction</label>
+                            </div>
+                            <div class="answer-feedback" id="feedback-q4" style="display:none;">
+                                <p><strong>Correct Answer: C) Induced polarization in the neutral object</strong></p>
+                                <p>When a charged object approaches a neutral object, it induces polarization, creating an opposite charge on the near side that causes attraction.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="quiz-question">
+                            <p><strong>5. If you charge a conducting sphere by induction with a negatively charged rod and grounding, then remove the ground and the rod, how will the sphere be charged?</strong></p>
+                            <div class="quiz-options">
+                                <label class="quiz-option"><input type="radio" name="q5" value="a"> A) Negatively charged</label><br>
+                                <label class="quiz-option"><input type="radio" name="q5" value="b"> B) Positively charged</label><br>
+                                <label class="quiz-option"><input type="radio" name="q5" value="c"> C) Neutral</label><br>
+                                <label class="quiz-option"><input type="radio" name="q5" value="d"> D) It depends on how long the rod was present</label>
+                            </div>
+                            <div class="answer-feedback" id="feedback-q5" style="display:none;">
+                                <p><strong>Correct Answer: B) Positively charged</strong></p>
+                                <p>The negatively charged rod repels electrons to the far side where they flow to ground. When the ground is removed, the sphere has lost electrons and is left with a net positive charge.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="quiz-controls">
+                            <button id="check-answers" class="btn-primary">Check Answers</button>
+                            <button id="show-answers" class="btn-secondary">Show Answers</button>
+                            <button id="reset-quiz" class="action-button">Reset Quiz</button>
+                            <div class="quiz-score" id="quiz-score"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -176,7 +251,7 @@
                     <h4><i class="fas fa-plug"></i> Charging by Conduction</h4>
                     <div class="explanation-card">
                         <div class="card-visual">
-                            <img src="Charging with conduction.png" alt="Diagram showing conduction charging" class="explanation-img">
+                            <img src="pictures/Charging with conduction.png" alt="Diagram showing conduction charging" class="explanation-img">
                         </div>
                         <div class="card-text">
                             <p>In conduction, a charged rod directly contacts the neutral ball, allowing electrons to flow between them:</p>
@@ -194,7 +269,7 @@
                     <h4><i class="fas fa-magnet"></i> Charging by Induction</h4>
                     <div class="explanation-card">
                         <div class="card-visual">
-                            <img src="Charging by Induction.png" alt="Diagram showing induction charging" class="explanation-img">
+                            <img src="pictures/Charging by Induction.png" alt="Diagram showing induction charging" class="explanation-img">
                         </div>
                         <div class="card-text">
                             <p>In induction, the charged rod is brought near but doesn't touch the ball:</p>
@@ -214,7 +289,7 @@
                     <h4><i class="fas fa-plug"></i> Induction with Grounding</h4>
                     <div class="explanation-card">
                         <div class="card-visual">
-                            <img src="Grounding.png" alt="Diagram showing grounding effects" class="explanation-img">
+                            <img src="pictures/Grounding.png" alt="Diagram showing grounding effects" class="explanation-img">
                         </div>
                         <div class="card-text">
                             <ul class="feature-list">
@@ -448,6 +523,9 @@
                         <li>Try the same with a negatively charged rod. Observe the difference.</li>
                     </ol>
                 </div>
+                
+                <!-- The assessment section was moved to the Practice Questions tab -->
+                
             </div>
         </div>
     </div>
@@ -527,6 +605,115 @@
                 document.body.classList.remove('modal-open');
             }
         });
+        
+        // Quiz functionality
+        const checkAnswersBtn = document.getElementById('check-answers');
+        const showAnswersBtn = document.getElementById('show-answers');
+        const resetQuizBtn = document.getElementById('reset-quiz');
+        const quizScore = document.getElementById('quiz-score');
+        
+        // Correct answers for each question
+        const correctAnswers = {
+            'q1': 'b',
+            'q2': 'c',
+            'q3': 'b',
+            'q4': 'c',
+            'q5': 'b'
+        };
+        
+        // Check answers when button is clicked
+        if (checkAnswersBtn) {
+            checkAnswersBtn.addEventListener('click', function() {
+                let score = 0;
+                let total = Object.keys(correctAnswers).length;
+                
+                // Check each question
+                for (let question in correctAnswers) {
+                    const selectedOption = document.querySelector(`input[name="${question}"]:checked`);
+                    
+                    if (selectedOption) {
+                        const questionElement = selectedOption.closest('.quiz-question');
+                        const feedbackElement = document.getElementById(`feedback-${question}`);
+                        
+                        if (selectedOption.value === correctAnswers[question]) {
+                            // Correct answer
+                            score++;
+                            questionElement.classList.add('correct');
+                            questionElement.classList.remove('incorrect');
+                        } else {
+                            // Incorrect answer
+                            questionElement.classList.add('incorrect');
+                            questionElement.classList.remove('correct');
+                            
+                            // Show the correct answer feedback
+                            if (feedbackElement) {
+                                feedbackElement.style.display = 'block';
+                            }
+                        }
+                    }
+                }
+                
+                // Display score
+                quizScore.textContent = `Score: ${score}/${total}`;
+                quizScore.style.display = 'block';
+            });
+        }
+        
+        // Show all correct answers
+        if (showAnswersBtn) {
+            showAnswersBtn.addEventListener('click', function() {
+                for (let question in correctAnswers) {
+                    // Select the correct answer
+                    const correctOption = document.querySelector(`input[name="${question}"][value="${correctAnswers[question]}"]`);
+                    
+                    if (correctOption) {
+                        correctOption.checked = true;
+                        
+                        // Display the feedback
+                        const feedbackElement = document.getElementById(`feedback-${question}`);
+                        if (feedbackElement) {
+                            feedbackElement.style.display = 'block';
+                        }
+                        
+                        // Highlight the question as correct
+                        const questionElement = correctOption.closest('.quiz-question');
+                        questionElement.classList.add('correct');
+                        questionElement.classList.remove('incorrect');
+                    }
+                }
+                
+                // Display perfect score
+                quizScore.textContent = `Score: ${Object.keys(correctAnswers).length}/${Object.keys(correctAnswers).length}`;
+                quizScore.style.display = 'block';
+            });
+        }
+        
+        // Reset quiz to initial state
+        if (resetQuizBtn) {
+            resetQuizBtn.addEventListener('click', function() {
+                // Clear all selected options
+                const radioButtons = document.querySelectorAll('.quiz-options input[type="radio"]');
+                radioButtons.forEach(button => {
+                    button.checked = false;
+                });
+                
+                // Hide all feedback
+                const feedbackElements = document.querySelectorAll('.answer-feedback');
+                feedbackElements.forEach(element => {
+                    element.style.display = 'none';
+                });
+                
+                // Reset question highlighting
+                const questionElements = document.querySelectorAll('.quiz-question');
+                questionElements.forEach(element => {
+                    element.classList.remove('correct', 'incorrect');
+                });
+                
+                // Clear score
+                quizScore.textContent = '';
+                quizScore.style.display = 'none';
+            });
+        }
     });
     </script>
     
@@ -534,5 +721,33 @@
     <script src="js/view.js"></script>
     <script src="js/controller.js"></script>
     <script src="js/main.js"></script>
+    
+    <script>
+    // Ensure tab switching functionality works directly in HTML
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab switching between Basic Controls and Practice Questions
+        const tabs = document.querySelectorAll('.right-panel .tab');
+        const tabContents = document.querySelectorAll('.right-panel .tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Show selected content
+                tabContents.forEach(content => {
+                    if (content.id === `${tabId}-content`) {
+                        content.classList.remove('hidden');
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    });
+    </script>
 </body>
 </html>

@@ -1,0 +1,48 @@
+/* Custom styling for slider to use blue for negative and red for positive */
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: linear-gradient(to right, #3498db, white, #e74c3c);
+    outline: none;
+    margin: 10px 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: pointer;
+    border: 1px solid #0056b3;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: pointer;
+    border: 1px solid #0056b3;
+}
+
+/* Style for the slider track in Firefox */
+input[type="range"]::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: linear-gradient(to right, #3498db, white, #e74c3c);
+}
+
+/* Color for negative charge display values */
+.charge-value.negative {
+    color: #3498db;
+}
+
+/* Color for positive charge display values */
+.charge-value.positive {
+    color: #e74c3c;
+}
