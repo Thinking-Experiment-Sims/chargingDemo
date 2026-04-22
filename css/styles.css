@@ -17,31 +17,62 @@ body {
     padding: 20px;
 }
 
-/* Modern, clean header */
 .app-header {
+    position: relative;
+    margin-bottom: 20px;
+    border: 1px solid #c8dbe3;
+    border-radius: 14px;
+    padding: 1.2rem 1.4rem;
+    background: linear-gradient(160deg, #ffffff, #f7fbfd);
+    box-shadow: 0 12px 24px rgba(12, 54, 68, 0.12);
+    overflow: hidden;
+}
+
+.app-header::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 12px;
+    border-radius: 14px 0 0 14px;
+    background: #0f7e9b;
+}
+
+.hero-top {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e1e4e8;
+    align-items: flex-start;
+    gap: 1rem;
 }
 
 .title-section {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    padding-left: 0.4rem;
+}
+
+.kicker {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #0b5f77;
 }
 
 h1 {
-    color: #2c3e50;
-    font-size: 1.8rem;
-    margin-bottom: 5px;
-    font-weight: 600;
+    color: #123140;
+    font-size: clamp(1.85rem, 2.8vw, 3rem);
+    line-height: 1.05;
+    margin: 0.35rem 0 0;
+    font-weight: 700;
 }
 
 .subtitle {
-    color: #6c757d;
+    margin-top: 0.38rem;
+    color: #4b6570;
     font-size: 1rem;
+    max-width: 76ch;
 }
 
 .simulation-container {

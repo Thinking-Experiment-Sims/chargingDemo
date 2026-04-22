@@ -24,17 +24,20 @@
         }
         
         .all-content-wrapper {
-            height: calc(100vh - 60px); /* Adjust for smaller header */
+            height: calc(100vh - 124px);
         }
         
         .app-header {
-            padding: 10px;
-            height: 40px;
+            padding: 0.95rem 1rem;
+            margin: 10px;
         }
         
         .title-section h1 {
-            font-size: 1.4rem;
-            margin: 0;
+            font-size: 1.55rem;
+        }
+
+        .kicker {
+            font-size: 0.72rem;
         }
         
         .subtitle {
@@ -74,15 +77,17 @@
 </head>
 <body>
     <div class="container">
-        <!-- Simplified header -->
         <header class="app-header">
-            <div class="title-section">
-                <h1>Electrostatic Charging Simulator</h1>
-            </div>
-            <div class="header-actions">
-                <button id="explanation-button" class="btn-primary" title="How It Works">
-                    <i class="fas fa-info-circle"></i> How It Works
-                </button>
+            <div class="hero-top">
+                <div class="title-section">
+                    <p class="kicker">The Thinking Experiment</p>
+                    <h1>Electrostatic Charging Simulator</h1>
+                </div>
+                <div class="header-actions">
+                    <button id="explanation-button" class="btn-primary" title="How It Works">
+                        <i class="fas fa-info-circle"></i> How It Works
+                    </button>
+                </div>
             </div>
         </header>
 
