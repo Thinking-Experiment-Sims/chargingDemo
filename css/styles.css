@@ -51,13 +51,41 @@ body {
     padding-left: 0.4rem;
 }
 
-.kicker {
-    margin: 0;
+.brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.05em;
+    color: #0f7e9b;
+    background: #eaf4f7;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    margin-bottom: 0.4rem;
+    border: 1px solid #c8dbe3;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.brand-badge:hover {
+    background: #d4ecf4;
     color: #0b5f77;
+}
+
+.lab-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #b5640e;
+    background: #fff3e5;
+    border: 1px solid #fedbb3;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    margin-left: 0.5rem;
 }
 
 h1 {
